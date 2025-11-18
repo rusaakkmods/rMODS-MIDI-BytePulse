@@ -93,6 +93,7 @@ void testModeLoop() {
   
   // Pan control via encoder (0-127, center at 64)
   static uint8_t panValue = 64;  // Start at center
+  static bool encoderButtonWasPressed = false;
   static bool functionButtonWasPressed = false;
   
   // Update controls
@@ -122,17 +123,26 @@ void testModeLoop() {
   }
   
   // Handle encoder button for Note On/Off test
-  bool functionButtonPressed = controls.functionPressed();
-  if (functionButtonPressed && !functionButtonWasPressed) {
+  bool encoderButtonPressed = controls.encoderPressed();
+  if (encoderButtonPressed && !encoderButtonWasPressed) {
     // Button just pressed - send Note On C3
     midiHandler.sendNoteOn(48, 100);  // C3, velocity 100
-    display._encoderButtonPressed = true;
-    DEBUG_PRINTLN("Function button pressed - Note On C3");
-  } else if (!functionButtonPressed && functionButtonWasPressed) {
+    DEBUG_PRINTLN("Encoder button pressed - Note On C3");
+  } else if (!encoderButtonPressed && encoderButtonWasPressed) {
     // Button just released - send Note Off C3
     midiHandler.sendNoteOff(48, 0);   // C3, velocity 0
+    DEBUG_PRINTLN("Encoder button released - Note Off C3");
+  }
+  encoderButtonWasPressed = encoderButtonPressed;
+  
+  // Handle function button for display status only
+  bool functionButtonPressed = controls.functionPressed();
+  if (functionButtonPressed && !functionButtonWasPressed) {
+    display._encoderButtonPressed = true;
+    DEBUG_PRINTLN("Function button pressed");
+  } else if (!functionButtonPressed && functionButtonWasPressed) {
     display._encoderButtonPressed = false;
-    DEBUG_PRINTLN("Function button released - Note Off C3");
+    DEBUG_PRINTLN("Function button released");
   }
   functionButtonWasPressed = functionButtonPressed;
   
