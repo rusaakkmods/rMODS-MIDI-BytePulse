@@ -75,15 +75,6 @@ private:
     static void handleDINStop();
     static void handleDINSystemReset();
     
-    // DIN to USB forwarding handlers
-    static void handleDINNoteOn(byte channel, byte note, byte velocity);
-    static void handleDINNoteOff(byte channel, byte note, byte velocity);
-    static void handleDINControlChange(byte channel, byte cc, byte value);
-    static void handleDINProgramChange(byte channel, byte program);
-    static void handleDINAfterTouchPoly(byte channel, byte note, byte pressure);
-    static void handleDINAfterTouchChannel(byte channel, byte pressure);
-    static void handleDINPitchBend(byte channel, int bend);
-    
     // Clock source selection logic
     void updateActiveClockSource();
     bool isUSBClockActive() const;
