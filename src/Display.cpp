@@ -26,7 +26,8 @@ Display::Display()
     , _lastCutoffValue(255)
     , _lastResonanceValue(255)
     , _lastPanValue(64)
-    , _wasStopped(true) {
+    , _wasStopped(true)
+    , _encoderButtonPressed(false) {
     strcpy(_lastControlLabel, "---");
 }
 
@@ -235,6 +236,11 @@ void Display::renderMain() {
                 snprintf(buf, sizeof(buf), "---");
             }
             _display.drawStr(0, 15, buf);
+            
+            // Show encoder button status at top right
+            if (_encoderButtonPressed) {
+                _display.drawStr(80, 15, "PRESSED");
+            }
             
             // Show play state at bottom
             if (_midiHandler && _midiHandler->isPlaying()) {

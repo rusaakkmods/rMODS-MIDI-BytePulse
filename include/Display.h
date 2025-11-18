@@ -74,6 +74,7 @@ private:
     uint8_t _lastPanValue;
     char _lastControlLabel[5];  // "VOL", "CUT", "RES", or "PAN"
     bool _wasStopped;  // Track if fully stopped vs paused
+    bool _encoderButtonPressed;  // Track encoder button state
     
     void renderSplash();
     void renderMain();

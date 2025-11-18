@@ -35,6 +35,10 @@ public:
     void sendStop();
     bool isPlaying() const { return _isPlaying; }
     
+    // Note messages (sends to both USB and DIN if available)
+    void sendNoteOn(uint8_t note, uint8_t velocity, uint8_t channel = MIDI_CHANNEL);
+    void sendNoteOff(uint8_t note, uint8_t velocity, uint8_t channel = MIDI_CHANNEL);
+    
     // Control Change (sends to both USB and DIN if available)
     void sendCC(uint8_t cc, uint8_t value, uint8_t channel = MIDI_CHANNEL);
     

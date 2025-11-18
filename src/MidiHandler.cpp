@@ -99,6 +99,34 @@ void MidiHandler::sendCC(uint8_t cc, uint8_t value, uint8_t channel) {
     // midiDIN.sendControlChange(cc, value, channel);
 }
 
+void MidiHandler::sendNoteOn(uint8_t note, uint8_t velocity, uint8_t channel) {
+    // Send to USB MIDI
+    MidiUSB.sendMIDI({
+        (uint8_t)(0x09),           // Note On
+        (uint8_t)(0x90 | (channel - 1)),  // Note On on channel
+        note,
+        velocity
+    });
+    MidiUSB.flush();
+    
+    // Send to DIN MIDI (optional forwarding)
+    // midiDIN.sendNoteOn(note, velocity, channel);
+}
+
+void MidiHandler::sendNoteOff(uint8_t note, uint8_t velocity, uint8_t channel) {
+    // Send to USB MIDI
+    MidiUSB.sendMIDI({
+        (uint8_t)(0x08),           // Note Off
+        (uint8_t)(0x80 | (channel - 1)),  // Note Off on channel
+        note,
+        velocity
+    });
+    MidiUSB.flush();
+    
+    // Send to DIN MIDI (optional forwarding)
+    // midiDIN.sendNoteOff(note, velocity, channel);
+}
+
 void MidiHandler::updateBPM() {
     unsigned long now = millis();
     if (_lastClockTime > 0 && _clocksSinceLastBeat >= MIDI_CLOCKS_PER_QN) {
