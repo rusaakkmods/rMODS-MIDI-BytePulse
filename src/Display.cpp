@@ -24,7 +24,8 @@ Display::Display()
     , _editClockSource(DEFAULT_CLOCK_SOURCE)
     , _lastVolumeValue(255)
     , _lastCutoffValue(255)
-    , _lastResonanceValue(255) {
+    , _lastResonanceValue(255)
+    , _wasStopped(true) {
     strcpy(_lastControlLabel, "---");
 }
 
@@ -228,7 +229,16 @@ void Display::renderMain() {
             } else {
                 snprintf(buf, sizeof(buf), "---");
             }
-            _display.drawStr(0, 20, buf);
+            _display.drawStr(0, 15, buf);
+            
+            // Show play state at bottom
+            if (_midiHandler && _midiHandler->isPlaying()) {
+                _display.drawStr(0, 30, "PLAY");
+            } else if (_wasStopped) {
+                _display.drawStr(0, 30, "STOP");
+            } else {
+                _display.drawStr(0, 30, "PAUSE");
+            }
         } else {
             _display.drawStr(0, 20, "---");
         }

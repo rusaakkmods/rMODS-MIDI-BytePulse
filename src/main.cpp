@@ -80,18 +80,78 @@ void setup() {
 }
 
 // ============================================================================
+// Test Mode Loop
+// ============================================================================
+
+#if TEST_MODE
+void testModeLoop() {
+  // Handle transport buttons
+  static bool playWasPressed = false;
+  static bool stopWasPressed = false;
+  static bool isPlaying = false;  // false = stopped/paused, true = playing
+  static bool wasStopped = true;  // true = stopped (not just paused)
+  
+  // Update controls
+  controls.update();
+  
+  // Read button states
+  bool playPressed = controls.playPressed();
+  bool stopPressed = controls.stopPressed();
+  
+  // Play/Pause button
+  if (playPressed && !playWasPressed) {
+    if (isPlaying) {
+      // Currently playing - pause it
+      midiHandler.sendStop();
+      isPlaying = false;
+      wasStopped = false;  // We're paused, not stopped
+      display._wasStopped = false;  // Update display state
+    } else {
+      // Currently paused or stopped
+      if (wasStopped) {
+        // Was stopped - send Start (from beginning)
+        midiHandler.sendStart();
+      } else {
+        // Was paused - send Continue (resume)
+        midiHandler.sendContinue();
+      }
+      isPlaying = true;
+    }
+  }
+  playWasPressed = playPressed;
+  
+  // Stop button
+  if (stopPressed && !stopWasPressed) {
+    midiHandler.sendStop();
+    isPlaying = false;
+    wasStopped = true;  // Full stop, reset position
+    display._wasStopped = true;  // Update display state
+  }
+  stopWasPressed = stopPressed;
+  
+  #if ENABLE_DISPLAY
+  display.update();
+  #endif
+}
+#endif
+
+// ============================================================================
 // Main Loop
 // ============================================================================
 
 void loop() {
   #if TEST_MODE
-  // Test mode: Update controls and display
-  controls.update();
-  #if ENABLE_DISPLAY
-  display.update();
-  #endif
+  testModeLoop();
   return;
   #endif
+  
+  // Handle transport buttons
+  static bool playWasPressed = false;
+  static bool stopWasPressed = false;
+  
+  // Read button states
+  bool playPressed = controls.playPressed();
+  bool stopPressed = controls.stopPressed();
   
   // Update all modules
   midiHandler.update();  // Handles both USB and DIN MIDI
@@ -100,13 +160,6 @@ void loop() {
   #if ENABLE_DISPLAY
   display.update();
   #endif
-  
-  // Handle transport buttons
-  static bool playWasPressed = false;
-  static bool stopWasPressed = false;
-  
-  bool playPressed = controls.playPressed();
-  bool stopPressed = controls.stopPressed();
   
   // Play/Pause button (toggle behavior)
   if (playPressed && !playWasPressed) {

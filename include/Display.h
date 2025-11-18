@@ -72,11 +72,15 @@ private:
     uint8_t _lastCutoffValue;
     uint8_t _lastResonanceValue;
     char _lastControlLabel[5];  // "VOL", "CUT", or "RES"
+    bool _wasStopped;  // Track if fully stopped vs paused
     
     void renderSplash();
     void renderMain();
     void renderMenu();
     void resetMenuTimeout();
+    
+    friend void loop();  // Allow loop to access _wasStopped
+    friend void testModeLoop();  // Allow testModeLoop to access _wasStopped
 };
 
 #endif // DISPLAY_H
