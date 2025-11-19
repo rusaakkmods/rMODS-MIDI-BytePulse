@@ -53,14 +53,18 @@ void setup() {
   #endif
   
   syncOut.begin();
+  
+  #if DISPLAY_ENABLED
   display.begin();
   
   bpmCounter.setDisplay(&display);
+  pots.setDisplay(&display);
+  transport.setDisplay(&display);
+  #endif
+  
   bpmCounter.setPotControl(&pots);
   bpmCounter.setTransportControl(&transport);
-  pots.setDisplay(&display);
   pots.setBPMCounter(&bpmCounter);
-  transport.setDisplay(&display);
   transport.setBPMCounter(&bpmCounter);
   syncOut.setBPMCounter(&bpmCounter);
   midiHandler.setSyncOut(&syncOut);
@@ -73,16 +77,9 @@ void setup() {
   #endif
 }
 
-void loop() {
-  // Process MIDI with optimized batching
-  processUSBMIDI();
-  midiHandler.update();
-  midiHandler.flushBuffer();  // Flush channel messages in batch
-  
-  // Time-critical sync output
+void loop() {  
   syncOut.update();
   
-  // Second pass for continuous flow
   processUSBMIDI();
   midiHandler.update();
   midiHandler.flushBuffer();
@@ -99,5 +96,7 @@ void loop() {
   }
   
   // Display multiplexing
+  #if DISPLAY_ENABLED
   display.updateDisplay();
+  #endif
 }

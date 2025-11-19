@@ -40,6 +40,9 @@
 #define DISPLAY_SCLK_PIN   15  // SCK  - Hardware SPI Clock
 #define DISPLAY_RCLK_PIN   14  // Latch - Register Clock (any GPIO)
 
+// Display Configuration
+#define DISPLAY_ENABLED     false  // Set to false to disable display
+
 
 #define SERIAL_DEBUG        false
 #define DEBUG_BAUD_RATE    115200 // Debug serial baud rate
