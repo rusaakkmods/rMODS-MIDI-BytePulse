@@ -8,8 +8,6 @@
 #include <Arduino.h>
 #include <MIDIUSB.h>
 
-#define MIDI_BUFFER_SIZE 128  // Balanced size with 4x flush per loop
-
 class SyncOut;
 
 class MIDIHandler {

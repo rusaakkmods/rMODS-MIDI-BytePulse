@@ -1,6 +1,7 @@
 /**
  * MIDI BytePulse - Pro Micro USB MIDI Sync Box
  * Hardware: SparkFun Pro Micro (ATmega32U4, 5V, 16MHz)
+ * Pure MIDI forwarding and clock sync
  */
 
 #include <Arduino.h>
@@ -8,17 +9,9 @@
 #include "config.h"
 #include "MIDIHandler.h"
 #include "SyncOut.h"
-#include "TransportControl.h"
-#include "PotControl.h"
-#include "HC595Display.h"
-#include "BPMCounter.h"
 
 MIDIHandler midiHandler;
 SyncOut syncOut;
-TransportControl transport;
-PotControl pots;
-HC595Display display(DISPLAY_RCLK_PIN);
-BPMCounter bpmCounter;
 
 void processUSBMIDI() {
   midiEventPacket_t rx = MidiUSB.read();
@@ -49,32 +42,12 @@ void setup() {
   Serial.begin(DEBUG_BAUD_RATE);
   delay(500);
   DEBUG_PRINTLN("=== MIDI BytePulse v1.0 ===");
-  DEBUG_PRINTLN("Pro Micro USB MIDI Sync");
+  DEBUG_PRINTLN("Pure MIDI Sync Box");
   #endif
   
   syncOut.begin();
-  
-  #if DISPLAY_ENABLED
-  display.begin();
-  
-  bpmCounter.setDisplay(&display);
-  pots.setDisplay(&display);
-  transport.setDisplay(&display);
-  #endif
-  
-  bpmCounter.setPotControl(&pots);
-  bpmCounter.setTransportControl(&transport);
-  
-  #if POTS_ENABLED
-  pots.setBPMCounter(&bpmCounter);
-  pots.begin();
-  #endif
-  
-  transport.setBPMCounter(&bpmCounter);
-  syncOut.setBPMCounter(&bpmCounter);
   midiHandler.setSyncOut(&syncOut);
   midiHandler.begin();
-  transport.begin();
   
   #if SERIAL_DEBUG
   DEBUG_PRINTLN("Ready.");
@@ -82,45 +55,16 @@ void setup() {
 }
 
 void loop() {  
-  // Time-critical: MIDI and sync first
+  // Time-critical: Sync output first
   syncOut.update();
   
+  // MIDI processing - dual pass for responsiveness
   processUSBMIDI();
   midiHandler.update();
   
-  // Second MIDI pass for better responsiveness
   processUSBMIDI();
   midiHandler.update();
   
   // Flush batched messages
   midiHandler.flushBuffer();
-  
-  // Safety: periodic flush every 100 loops to catch any orphaned messages
-  static uint16_t loopCounter = 0;
-  if (++loopCounter >= 100) {
-    midiHandler.flushBuffer();
-    loopCounter = 0;
-  }
-  
-  // UI updates - throttled to reduce blocking
-  static unsigned long lastUIUpdate = 0;
-  if (millis() - lastUIUpdate >= 10) {
-    transport.update();
-    #if POTS_ENABLED
-    pots.update();
-    #endif
-    lastUIUpdate = millis();
-  }
-  
-  // BPM calculation and display updates
-  static unsigned long lastDisplayUpdate = 0;
-  if (millis() - lastDisplayUpdate >= 10) {
-    bpmCounter.update();
-    lastDisplayUpdate = millis();
-  }
-  
-  // Display multiplexing
-  #if DISPLAY_ENABLED
-  display.updateDisplay();
-  #endif
 }

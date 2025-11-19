@@ -3,7 +3,6 @@
  */
 
 #include "SyncOut.h"
-#include "BPMCounter.h"
 #include "config.h"
 
 #define PULSE_WIDTH_US 5000
@@ -17,7 +16,6 @@ void SyncOut::begin() {
   digitalWrite(LED_BEAT_PIN, LOW);
   
   ppqnCounter = 0;
-  displayUpdateCounter = 0;
   isPlaying = false;
   usbIsPlaying = false;
   clockState = false;
@@ -90,12 +88,6 @@ void SyncOut::handleClock(ClockSource source) {
       lastDINClockTime = millis();
       prevDINClockTime = 0;
       avgDINClockInterval = 0;
-      
-      // Show "t" immediately when DIN starts without START message
-      if (bpmCounter) {
-        bpmCounter->reset();
-        bpmCounter->start();
-      }
     }
   }
   
@@ -108,15 +100,10 @@ void SyncOut::handleClock(ClockSource source) {
   clockState = true;
   lastPulseTime = micros();
   
-  // Handle beat LED and BPM counter on downbeat (ppqnCounter == 0)
+  // Handle beat LED on downbeat (ppqnCounter == 0)
   if (ppqnCounter == 0) {
     digitalWrite(LED_BEAT_PIN, HIGH);
     ledState = true;
-    
-    // Update BPM counter on downbeat
-    if (bpmCounter) {
-      bpmCounter->handleBeat();
-    }
   }
   
   // Increment counter after processing current beat
@@ -136,11 +123,6 @@ void SyncOut::handleStart(ClockSource source) {
     isPlaying = true;
     ppqnCounter = 0;  // Ready for first clock at position 0
     
-    if (bpmCounter) {
-      bpmCounter->reset();
-      bpmCounter->start();  // Show "t" immediately
-    }
-    
     // Don't output pulse/LED here - let first clock handle it
     return;
   }
@@ -154,11 +136,6 @@ void SyncOut::handleStart(ClockSource source) {
     isPlaying = true;
     ppqnCounter = 0;  // Ready for first clock at position 0
     
-    if (bpmCounter) {
-      bpmCounter->reset();
-      bpmCounter->start();  // Show "t" immediately
-    }
-    
     // Don't output pulse/LED here - let first clock handle it
   }
 }
@@ -169,10 +146,6 @@ void SyncOut::handleStop(ClockSource source) {
     activeSource = CLOCK_SOURCE_NONE;
     avgUSBClockInterval = 0;
     prevUSBClockTime = 0;
-    
-    if (bpmCounter) {
-      bpmCounter->reset();
-    }
     
     return;
   }
@@ -190,10 +163,6 @@ void SyncOut::handleStop(ClockSource source) {
     digitalWrite(LED_BEAT_PIN, LOW);
     clockState = false;
     ledState = false;
-    
-    if (bpmCounter) {
-      bpmCounter->reset();
-    }
   }
 }
 

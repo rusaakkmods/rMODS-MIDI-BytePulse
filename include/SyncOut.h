@@ -13,8 +13,6 @@ enum ClockSource {
   CLOCK_SOURCE_USB
 };
 
-class BPMCounter;
-
 class SyncOut {
 public:
   void begin();
@@ -23,9 +21,7 @@ public:
   void handleStop(ClockSource source);
   void update();
   ClockSource getActiveSource() { return activeSource; }
-  void setBPMCounter(BPMCounter* bc) { bpmCounter = bc; }
   unsigned long getClockInterval() { return avgUSBClockInterval; }
-  void updateDisplayBeat();
 
 private:
   void pulseClock();
@@ -43,11 +39,9 @@ private:
   bool clockState = false;
   bool ledState = false;
   byte ppqnCounter = 0;
-  byte displayUpdateCounter = 0;  // Counter to throttle display updates
   bool isPlaying = false;
   bool usbIsPlaying = false;
   ClockSource activeSource = CLOCK_SOURCE_NONE;
-  BPMCounter* bpmCounter = nullptr;
 };
 
 #endif  // SYNC_OUT_H
