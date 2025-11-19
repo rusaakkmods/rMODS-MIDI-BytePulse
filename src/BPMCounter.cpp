@@ -5,6 +5,7 @@
 #include "BPMCounter.h"
 #include "HC595Display.h"
 #include "PotControl.h"
+#include "TransportControl.h"
 #include "config.h"
 
 BPMCounter::BPMCounter() {
@@ -92,15 +93,18 @@ void BPMCounter::update() {
   }
   
   // Update BPM display if changed by threshold
-  // BUT don't override control displays if they're active
+  // BUT don't override control displays or transport messages if they're active
   if (bpmNeedsUpdate && display) {
-    // Check if any control display is active - if so, skip BPM update
-    if (!potControl || !potControl->isAnyControlDisplayActive()) {
+    // Check if any control display or transport message is active - if so, skip BPM update
+    bool controlActive = potControl && potControl->isAnyControlDisplayActive();
+    bool messageActive = transportControl && transportControl->isMessageDisplayActive();
+    
+    if (!controlActive && !messageActive) {
       display->showBPM(currentBPM);
       displayedBPM = currentBPM;
       bpmNeedsUpdate = false;
     }
-    // If control is showing, bpmNeedsUpdate stays true and will update after timeout
+    // If control or message is showing, bpmNeedsUpdate stays true and will update after timeout
   }
   
   // Turn on 4th digit decimal on beat

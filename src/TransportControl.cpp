@@ -3,10 +3,13 @@
  */
 
 #include "TransportControl.h"
+#include "HC595Display.h"
+#include "BPMCounter.h"
 #include "config.h"
 #include <MIDIUSB.h>
 
 #define DEBOUNCE_MS 50
+#define MESSAGE_DISPLAY_DURATION 500  // Show message for 0.5 second
 
 void TransportControl::begin() {
   pinMode(BTN_PLAY_PIN, INPUT_PULLUP);
@@ -17,6 +20,21 @@ void TransportControl::begin() {
 void TransportControl::update() {
   handlePlayButton();
   handleStopButton();
+  
+  // Check if message display timeout expired
+  if (messageDisplayActive && display && bpmCounter) {
+    unsigned long now = millis();
+    if (now - messageDisplayTime >= MESSAGE_DISPLAY_DURATION) {
+      messageDisplayActive = false;
+      // Restore appropriate display based on state
+      if (state == TRANSPORT_STOP) {
+        display->showStopped();
+        display->setDecimalPoint(3, true);
+      } else {
+        display->showBPM(bpmCounter->getBPM());
+      }
+    }
+  }
 }
 
 void TransportControl::handlePlayButton() {
@@ -33,14 +51,29 @@ void TransportControl::handlePlayButton() {
         case TRANSPORT_STOP:
           state = TRANSPORT_PLAY;
           sendStart();
+          if (display) {
+            display->showPlay();
+            messageDisplayActive = true;
+            messageDisplayTime = millis();
+          }
           break;
         case TRANSPORT_PLAY:
           state = TRANSPORT_PAUSE;
           sendStop();
+          if (display) {
+            display->showHold();
+            messageDisplayActive = true;
+            messageDisplayTime = millis();
+          }
           break;
         case TRANSPORT_PAUSE:
           state = TRANSPORT_PLAY;
           sendContinue();
+          if (display) {
+            display->showPlay();
+            messageDisplayActive = true;
+            messageDisplayTime = millis();
+          }
           break;
       }
     } else if (reading == HIGH) {
@@ -63,6 +96,11 @@ void TransportControl::handleStopButton() {
       stopPressed = true;
       state = TRANSPORT_STOP;
       sendStop();
+      if (display) {
+        display->showStop();
+        messageDisplayActive = true;
+        messageDisplayTime = millis();
+      }
     } else if (reading == HIGH) {
       stopPressed = false;
     }

@@ -10,6 +10,7 @@
 
 class HC595Display;
 class PotControl;
+class TransportControl;
 
 class BPMCounter {
 public:
@@ -22,6 +23,7 @@ public:
   bool hasChanged(uint8_t threshold = 2);
   void setDisplay(HC595Display* disp) { display = disp; }
   void setPotControl(PotControl* pots) { potControl = pots; }
+  void setTransportControl(TransportControl* trans) { transportControl = trans; }
   void update();  // Call from main loop to handle beat off timing and BPM display
 
 private:
@@ -39,6 +41,7 @@ private:
   bool bpmNeedsUpdate = false;
   HC595Display* display = nullptr;
   PotControl* potControl = nullptr;
+  TransportControl* transportControl = nullptr;
 };
 
 #endif  // BPM_COUNTER_H

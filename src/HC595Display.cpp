@@ -27,6 +27,13 @@ const uint8_t HC595Display::CHAR_V = 0xE3;  // 'u' (segments C,D,E) - lower u sh
 const uint8_t HC595Display::CHAR_P = 0x8C;  // 'P' (segments A,B,E,F,G)
 const uint8_t HC595Display::CHAR_N = 0xAB;  // 'n' (segments C,E,G) - inverted from 0x54
 const uint8_t HC595Display::CHAR_DASH = 0xBF;  // '-' (segment G only)
+const uint8_t HC595Display::CHAR_A = 0x88;  // 'A' (segments A,B,C,E,F,G)
+const uint8_t HC595Display::CHAR_L = 0xC7;  // 'L' (segments D,E,F)
+const uint8_t HC595Display::CHAR_Y = 0x91;  // 'y' (segments B,C,D,F,G)
+const uint8_t HC595Display::CHAR_H = 0x89;  // 'H' (segments B,C,E,F,G)
+const uint8_t HC595Display::CHAR_O = 0xA3;  // 'o' (segments C,D,E,G)
+const uint8_t HC595Display::CHAR_D = 0xA1;  // 'd' (segments B,C,D,E,G)
+const uint8_t HC595Display::CHAR_S = 0x92;  // 'S' (segments A,C,D,F,G)
 
 HC595Display::HC595Display(uint8_t latchPin) 
     : _latchPin(latchPin) {
@@ -166,6 +173,30 @@ void HC595Display::showModulation(uint8_t mod) {
         _displayBuffer[2] = DIGIT_PATTERNS[(mod / 10) % 10];
         _displayBuffer[3] = DIGIT_PATTERNS[mod % 10];
     }
+}
+
+void HC595Display::showPlay() {
+    // Show "PLAy"
+    _displayBuffer[0] = CHAR_P;
+    _displayBuffer[1] = CHAR_L;
+    _displayBuffer[2] = CHAR_A;
+    _displayBuffer[3] = CHAR_Y;
+}
+
+void HC595Display::showHold() {
+    // Show "HoLd"
+    _displayBuffer[0] = CHAR_H;
+    _displayBuffer[1] = CHAR_O;
+    _displayBuffer[2] = CHAR_L;
+    _displayBuffer[3] = CHAR_D;
+}
+
+void HC595Display::showStop() {
+    // Show "StoP"
+    _displayBuffer[0] = CHAR_S;
+    _displayBuffer[1] = CHAR_T;
+    _displayBuffer[2] = CHAR_O;
+    _displayBuffer[3] = CHAR_P;
 }
 
 void HC595Display::updateDisplay() {
