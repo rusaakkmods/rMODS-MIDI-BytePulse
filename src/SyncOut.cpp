@@ -85,7 +85,19 @@ void SyncOut::handleClock(ClockSource source) {
   if (source == CLOCK_SOURCE_DIN && activeSource != CLOCK_SOURCE_USB) {
     if (!isPlaying) {
       isPlaying = true;
-      ppqnCounter = 0;
+      activeSource = CLOCK_SOURCE_DIN;
+      ppqnCounter = 1;  // Start at 1, not 0, so first clock doesn't trigger LED
+      lastDINClockTime = millis();
+      prevDINClockTime = 0;
+      avgDINClockInterval = 0;
+      
+      // Send first clock pulse but skip LED/beat
+      if (isJackConnected()) {
+        digitalWrite(CLOCK_OUT_PIN, HIGH);
+      }
+      clockState = true;
+      lastPulseTime = micros();
+      return;  // Skip the LED check for initialization clock
     }
   }
   

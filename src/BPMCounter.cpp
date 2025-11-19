@@ -3,7 +3,7 @@
  */
 
 #include "BPMCounter.h"
-#include "HC595Display.h"
+// #include "HC595Display.h"  // DISABLED
 #include "config.h"
 
 BPMCounter::BPMCounter() {
@@ -46,30 +46,27 @@ void BPMCounter::reset() {
   beatNeedsOff = false;
   // Don't reset currentBPM - keep last known value
   
-  // Clear display on reset
-  if (display) {
-    display->clear();
-  }
+  // Display disabled
+  // if (display) {
+  //   display->clear();
+  // }
 }
 
 void BPMCounter::update() {
-  // Turn on beat indicator if needed
-  if (beatNeedsOn && display) {
-    // Clear all decimals first
-    display->allDecimalsOff();
-    // Show decimal on current beat position (0-3)
-    display->setDecimalPoint(beatPosition, true);
-    beatIsOn = true;
-    beatNeedsOn = false;
-  }
-  
-  // Turn off beat indicator after 50ms
-  if (beatIsOn && display) {
-    if (millis() - beatOnTime >= 50) {
-      display->allDecimalsOff();
-      beatIsOn = false;
-    }
-  }
+  // Display disabled - no visual feedback
+  // if (beatNeedsOn && display) {
+  //   display->allDecimalsOff();
+  //   display->setDecimalPoint(beatPosition, true);
+  //   beatIsOn = true;
+  //   beatNeedsOn = false;
+  // }
+  // 
+  // if (beatIsOn && display) {
+  //   if (millis() - beatOnTime >= 50) {
+  //     display->allDecimalsOff();
+  //     beatIsOn = false;
+  //   }
+  // }
 }
 
 uint16_t BPMCounter::getBPM() {
