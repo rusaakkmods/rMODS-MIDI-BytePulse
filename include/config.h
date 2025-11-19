@@ -35,7 +35,20 @@
 #define LED_BEAT_PIN       16
 
 // TM1637 7-Segment Display
+// Pro Micro: Pin 6 = D6, Pin 7 = D7/E6
 #define TM1637_CLK_PIN      6
 #define TM1637_DIO_PIN      7
+
+
+#define SERIAL_DEBUG        false
+#define DEBUG_BAUD_RATE    115200 // Debug serial baud rate
+
+#if SERIAL_DEBUG
+  #define DEBUG_PRINT(x)   Serial.print(x)
+  #define DEBUG_PRINTLN(x) Serial.println(x)
+#else
+  #define DEBUG_PRINT(x)
+  #define DEBUG_PRINTLN(x)
+#endif
 
 #endif  // CONFIG_H

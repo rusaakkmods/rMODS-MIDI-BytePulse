@@ -9,8 +9,10 @@
 #define CC_MODULATION 1
 #define CC_VOLUME 7
 
-#define THRESHOLD_7BIT 2
-#define THRESHOLD_14BIT 8
+// Increased thresholds to filter out pot noise
+#define THRESHOLD_7BIT 4    // Was 2, now 4 (about 3% change required)
+#define THRESHOLD_14BIT 32  // Was 8, now 32 (about 3% change required)
+#define POT_UPDATE_INTERVAL 50  // Only read pots every 50ms
 
 void PotControl::begin() {
   pinMode(POT_VOL_PIN, INPUT);
@@ -23,6 +25,13 @@ void PotControl::begin() {
 }
 
 void PotControl::update() {
+  // Throttle pot reading to reduce noise-induced MIDI spam
+  unsigned long now = millis();
+  if (now - lastUpdate < POT_UPDATE_INTERVAL) {
+    return;
+  }
+  lastUpdate = now;
+  
   readVolume();
   readPitch();
   readModulation();
@@ -59,7 +68,7 @@ void PotControl::readModulation() {
 void PotControl::sendCC(uint8_t ccNumber, uint8_t value) {
   midiEventPacket_t event = {0x0B, 0xB0, ccNumber, value};
   MidiUSB.sendMIDI(event);
-  MidiUSB.flush();
+  // Don't flush - let main loop batch them
 }
 
 void PotControl::sendPitchBend(int16_t value) {
@@ -69,5 +78,5 @@ void PotControl::sendPitchBend(int16_t value) {
   
   midiEventPacket_t event = {0x0E, 0xE0, lsb, msb};
   MidiUSB.sendMIDI(event);
-  MidiUSB.flush();
+  // Don't flush - let main loop batch them
 }

@@ -3,6 +3,7 @@
  */
 
 #include "SyncOut.h"
+#include "DisplayControl.h"
 #include "config.h"
 
 #define PULSE_WIDTH_US 5000
@@ -16,6 +17,7 @@ void SyncOut::begin() {
   digitalWrite(LED_BEAT_PIN, LOW);
   
   ppqnCounter = 0;
+  displayUpdateCounter = 0;
   isPlaying = false;
   usbIsPlaying = false;
   clockState = false;
@@ -24,24 +26,46 @@ void SyncOut::begin() {
   lastUSBClockTime = 0;
   prevUSBClockTime = 0;
   avgUSBClockInterval = 0;
+  lastDINClockTime = 0;
+  prevDINClockTime = 0;
+  avgDINClockInterval = 0;
 }
 
 void SyncOut::handleClock(ClockSource source) {
+  unsigned long now = millis();
+  
   if (source == CLOCK_SOURCE_USB && usbIsPlaying) {
-    unsigned long now = millis();
-    
     if (prevUSBClockTime > 0) {
       unsigned long interval = now - prevUSBClockTime;
+      
+      // Light smoothing for timeout calculation only
       if (avgUSBClockInterval == 0) {
         avgUSBClockInterval = interval;
       } else {
-        avgUSBClockInterval = (avgUSBClockInterval * 3 + interval * 5) / 8;
+        avgUSBClockInterval = (avgUSBClockInterval * 3 + interval) / 4;
       }
     }
     
     prevUSBClockTime = now;
     lastUSBClockTime = now;
     activeSource = CLOCK_SOURCE_USB;
+  }
+  
+  if (source == CLOCK_SOURCE_DIN && activeSource != CLOCK_SOURCE_USB) {
+    if (prevDINClockTime > 0) {
+      unsigned long interval = now - prevDINClockTime;
+      
+      // Light smoothing for timeout calculation only
+      if (avgDINClockInterval == 0) {
+        avgDINClockInterval = interval;
+      } else {
+        avgDINClockInterval = (avgDINClockInterval * 3 + interval) / 4;
+      }
+    }
+    
+    prevDINClockTime = now;
+    lastDINClockTime = now;
+    activeSource = CLOCK_SOURCE_DIN;
   }
   
   if (source == CLOCK_SOURCE_USB && !usbIsPlaying) {
@@ -59,7 +83,10 @@ void SyncOut::handleClock(ClockSource source) {
   }
   
   if (source == CLOCK_SOURCE_DIN && activeSource != CLOCK_SOURCE_USB) {
-    activeSource = CLOCK_SOURCE_DIN;
+    if (!isPlaying) {
+      isPlaying = true;
+      ppqnCounter = 0;
+    }
   }
   
   if (!isPlaying) return;
@@ -73,6 +100,11 @@ void SyncOut::handleClock(ClockSource source) {
   if (ppqnCounter == 0) {
     digitalWrite(LED_BEAT_PIN, HIGH);
     ledState = true;
+    
+    // Update display beat indicator on downbeat
+    if (displayControl) {
+      displayControl->beatOn();
+    }
   }
   
   ppqnCounter++;
@@ -91,6 +123,10 @@ void SyncOut::handleStart(ClockSource source) {
     isPlaying = true;
     ppqnCounter = 0;
     
+    if (displayControl) {
+      displayControl->reset();
+    }
+    
     if (isJackConnected()) {
       digitalWrite(CLOCK_OUT_PIN, HIGH);
     }
@@ -110,6 +146,10 @@ void SyncOut::handleStart(ClockSource source) {
     isPlaying = true;
     ppqnCounter = 0;
     
+    if (displayControl) {
+      displayControl->reset();
+    }
+    
     if (isJackConnected()) {
       digitalWrite(CLOCK_OUT_PIN, HIGH);
     }
@@ -126,6 +166,11 @@ void SyncOut::handleStop(ClockSource source) {
     activeSource = CLOCK_SOURCE_NONE;
     avgUSBClockInterval = 0;
     prevUSBClockTime = 0;
+    
+    if (displayControl) {
+      displayControl->reset();
+      displayControl->showStopIndicator();
+    }
     return;
   }
   
@@ -142,6 +187,11 @@ void SyncOut::handleStop(ClockSource source) {
     digitalWrite(LED_BEAT_PIN, LOW);
     clockState = false;
     ledState = false;
+    
+    if (displayControl) {
+      displayControl->reset();
+      displayControl->showStopIndicator();
+    }
   }
 }
 
@@ -158,6 +208,11 @@ void SyncOut::update() {
   if (ledState && (currentTime - lastPulseTime >= PULSE_WIDTH_US)) {
     digitalWrite(LED_BEAT_PIN, LOW);
     ledState = false;
+    
+    // Turn off display beat indicator
+    if (displayControl) {
+      displayControl->beatOff();
+    }
   }
 }
 

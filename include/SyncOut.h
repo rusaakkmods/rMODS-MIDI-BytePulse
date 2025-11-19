@@ -13,6 +13,8 @@ enum ClockSource {
   CLOCK_SOURCE_USB
 };
 
+class DisplayControl;
+
 class SyncOut {
 public:
   void begin();
@@ -21,6 +23,9 @@ public:
   void handleStop(ClockSource source);
   void update();
   ClockSource getActiveSource() { return activeSource; }
+  void setDisplayControl(DisplayControl* dc) { displayControl = dc; }
+  unsigned long getClockInterval() { return avgUSBClockInterval; }
+  void updateDisplayBeat();
 
 private:
   void pulseClock();
@@ -32,12 +37,17 @@ private:
   unsigned long lastUSBClockTime = 0;
   unsigned long prevUSBClockTime = 0;
   unsigned long avgUSBClockInterval = 0;
+  unsigned long lastDINClockTime = 0;
+  unsigned long prevDINClockTime = 0;
+  unsigned long avgDINClockInterval = 0;
   bool clockState = false;
   bool ledState = false;
   byte ppqnCounter = 0;
+  byte displayUpdateCounter = 0;  // Counter to throttle display updates
   bool isPlaying = false;
   bool usbIsPlaying = false;
   ClockSource activeSource = CLOCK_SOURCE_NONE;
+  DisplayControl* displayControl = nullptr;
 };
 
 #endif  // SYNC_OUT_H

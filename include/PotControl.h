@@ -22,6 +22,7 @@ private:
   uint8_t lastVolume = 0;
   uint16_t lastPitch = 0;
   uint8_t lastModulation = 0;
+  unsigned long lastUpdate = 0;
 };
 
 #endif  // POT_CONTROL_H
