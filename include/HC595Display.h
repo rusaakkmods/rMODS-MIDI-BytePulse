@@ -1,6 +1,6 @@
 /**
  * 74HC595 Dual Shift Register 7-Segment Display Driver
- * Minimal implementation for beat indicator only
+ * Minimal implementation for BPM display and beat indicator
  */
 
 #ifndef HC595_DISPLAY_H
@@ -14,6 +14,10 @@ public:
     
     void begin();
     
+    // Display control
+    void showBPM(uint16_t bpm);  // Show BPM with "t" prefix
+    void showStopped();          // Show "-" when stopped
+    
     // Beat indicator
     void setDecimalPoint(uint8_t position, bool on);
     
@@ -25,6 +29,10 @@ public:
     
 private:
     uint8_t _latchPin;
+    
+    static const uint8_t DIGIT_PATTERNS[10];
+    static const uint8_t CHAR_T;     // 't' character
+    static const uint8_t CHAR_DASH;  // '-' character
     
     void shiftOutBitBang(uint8_t data);
 };

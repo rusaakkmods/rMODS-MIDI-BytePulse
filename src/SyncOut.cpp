@@ -91,6 +91,12 @@ void SyncOut::handleClock(ClockSource source) {
       prevDINClockTime = 0;
       avgDINClockInterval = 0;
       
+      // Show "t" immediately when DIN starts without START message
+      if (bpmCounter) {
+        bpmCounter->reset();
+        bpmCounter->start();
+      }
+      
       // Send first clock pulse but skip LED/beat
       if (isJackConnected()) {
         digitalWrite(CLOCK_OUT_PIN, HIGH);
@@ -137,6 +143,7 @@ void SyncOut::handleStart(ClockSource source) {
     
     if (bpmCounter) {
       bpmCounter->reset();
+      bpmCounter->start();  // Show "t" immediately
     }
     
     if (isJackConnected()) {
@@ -160,6 +167,7 @@ void SyncOut::handleStart(ClockSource source) {
     
     if (bpmCounter) {
       bpmCounter->reset();
+      bpmCounter->start();  // Show "t" immediately
     }
     
     if (isJackConnected()) {

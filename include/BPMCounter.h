@@ -15,6 +15,7 @@ public:
   BPMCounter();
   void handleBeat();
   void reset();
+  void start();  // Called when playback starts
   uint16_t getBPM();
   bool hasChanged(uint8_t threshold = 2);
   void setDisplay(HC595Display* disp) { display = disp; }
