@@ -9,10 +9,12 @@
 #include "MIDIHandler.h"
 #include "SyncOut.h"
 #include "TransportControl.h"
+#include "PotControl.h"
 
 MIDIHandler midiHandler;
 SyncOut syncOut;
 TransportControl transport;
+PotControl pots;
 
 void processUSBMIDI() {
   midiEventPacket_t rx = MidiUSB.read();
@@ -43,6 +45,7 @@ void setup() {
   midiHandler.setSyncOut(&syncOut);
   midiHandler.begin();
   transport.begin();
+  pots.begin();
 }
 
 void loop() {
@@ -50,4 +53,5 @@ void loop() {
   midiHandler.update();
   syncOut.update();
   transport.update();
+  pots.update();
 }

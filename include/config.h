@@ -18,8 +18,8 @@
 
 // Analog Inputs (Potentiometers)
 #define POT_VOLUME_PIN     A0
-#define POT_CUTOFF_PIN     A1
-#define POT_RESONANCE_PIN  A2
+#define POT_PITCH_PIN     A1
+#define POT_MODULATION_PIN  A2
 
 // Rotary Encoder
 #define ENCODER_A_PIN       2
