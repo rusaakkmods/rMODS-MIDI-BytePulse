@@ -13,13 +13,6 @@ Display::Display()
 void Display::begin() {
     _display.setBrightness(0x0a); // Medium brightness (0-15)
     clear();
-    
-    DEBUG_PRINTLN("7-Seg OK");
-}
-
-void Display::update() {
-    // Display updates happen immediately in showBPM/showPPQN
-    // This function kept for compatibility but does nothing
 }
 
 void Display::showBPM(uint16_t bpm) {

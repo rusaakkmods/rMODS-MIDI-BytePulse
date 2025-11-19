@@ -12,12 +12,7 @@
 // FEATURE FLAGS
 // ============================================================================
 
-#define ENABLE_DISPLAY      1    // Set to 0 to disable 7-segment display
-#ifndef TEST_MODE
-#define TEST_MODE           0    // Set to 1 to enable test mode (display only)
-#endif
-#define MIDI_FORWARD_ONLY   0    // Set to 1 for pure MIDI forwarding (no display, no controls)
-#define SERIAL_DEBUG        false  // Enable serial debug to check MIDI forwarding
+#define TEST_MODE           1    // Set to 1 to enable test mode (display only)
 
 // ============================================================================
 // PIN DEFINITIONS (Pro Micro - SparkFun Pin Numbers)

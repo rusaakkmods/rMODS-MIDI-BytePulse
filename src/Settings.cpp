@@ -11,11 +11,8 @@ Settings::Settings() {
 void Settings::begin() {
     // Try to load settings from EEPROM
     if (!load()) {
-        DEBUG_PRINTLN("No valid settings in EEPROM, using defaults");
         setDefaults();
         save();
-    } else {
-        DEBUG_PRINTLN("Settings loaded from EEPROM");
     }
 }
 
@@ -30,14 +27,11 @@ void Settings::save() {
     _data.checksum = calculateChecksum();
     
     writeToEEPROM();
-    
-    DEBUG_PRINTLN("Settings saved to EEPROM");
 }
 
 void Settings::reset() {
     setDefaults();
     save();
-    DEBUG_PRINTLN("Settings reset to defaults");
 }
 
 void Settings::setPPQN(uint8_t ppqn) {
@@ -59,30 +53,25 @@ void Settings::setClockSource(ClockSource source) {
 bool Settings::isValid() const {
     // Check magic number
     if (_data.magic != EEPROM_MAGIC) {
-        DEBUG_PRINTLN("Invalid magic number");
         return false;
     }
     
     // Check version
     if (_data.version != EEPROM_VERSION) {
-        DEBUG_PRINTLN("Version mismatch");
         return false;
     }
     
     // Verify checksum
     if (_data.checksum != calculateChecksum()) {
-        DEBUG_PRINTLN("Checksum mismatch");
         return false;
     }
     
     // Validate ranges
     if (_data.ppqn < MIN_PPQN || _data.ppqn > MAX_PPQN) {
-        DEBUG_PRINTLN("Invalid PPQN value");
         return false;
     }
     
     if (_data.midiChannel < 1 || _data.midiChannel > 16) {
-        DEBUG_PRINTLN("Invalid MIDI channel");
         return false;
     }
     

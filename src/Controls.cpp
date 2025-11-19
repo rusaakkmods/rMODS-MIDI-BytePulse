@@ -53,8 +53,6 @@ void Controls::begin() {
     _volumeValue = mapAdcToMidi(_volumeRaw);
     _cutoffValue = mapAdcToMidi(_cutoffRaw);
     _resonanceValue = mapAdcToMidi(_resonanceRaw);
-    
-    DEBUG_PRINTLN("Controls initialized");
 }
 
 void Controls::update() {
@@ -88,24 +86,18 @@ void Controls::updatePots() {
     if (potValueChanged(volumeRaw, _volumeRaw, _volumeValue, _volumeSmooth)) {
         if (_midiHandler) {
             _midiHandler->sendCC(CC_VOLUME, _volumeValue);
-            DEBUG_PRINT("Volume: ");
-            DEBUG_PRINTLN(_volumeValue);
         }
     }
     
     if (potValueChanged(cutoffRaw, _cutoffRaw, _cutoffValue, _cutoffSmooth)) {
         if (_midiHandler) {
             _midiHandler->sendCC(CC_CUTOFF, _cutoffValue);
-            DEBUG_PRINT("Cutoff: ");
-            DEBUG_PRINTLN(_cutoffValue);
         }
     }
     
     if (potValueChanged(resonanceRaw, _resonanceRaw, _resonanceValue, _resonanceSmooth)) {
         if (_midiHandler) {
             _midiHandler->sendCC(CC_RESONANCE, _resonanceValue);
-            DEBUG_PRINT("Resonance: ");
-            DEBUG_PRINTLN(_resonanceValue);
         }
     }
 }
@@ -114,11 +106,6 @@ int8_t Controls::getEncoderDelta() {
     long newPosition = _encoder.read() / 4;  // Divide by 4: 4 pulses = 1 detent click
     int8_t delta = (int8_t)(newPosition - _lastEncoderPosition);
     _lastEncoderPosition = newPosition;
-    
-    if (delta != 0) {
-        DEBUG_PRINT("Encoder delta: ");
-        DEBUG_PRINTLN(delta);
-    }
     
     return delta;
 }

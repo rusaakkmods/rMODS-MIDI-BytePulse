@@ -32,8 +32,6 @@ void ClockSync::begin() {
     
     updateCableDetection();
     calculateClockDivider();
-    
-    DEBUG_PRINTLN("Clock Sync initialized");
 }
 
 void ClockSync::update() {
@@ -84,14 +82,10 @@ void ClockSync::onTransportStart() {
     _midiClockCounter = 0;
     _beatClockCounter = 0;
     _pulseCount = 0;
-    
-    DEBUG_PRINTLN("Clock Sync: Transport Start");
 }
 
 void ClockSync::onTransportContinue() {
     _clockActive = true;
-    
-    DEBUG_PRINTLN("Clock Sync: Transport Continue");
 }
 
 void ClockSync::onTransportStop() {
@@ -105,8 +99,6 @@ void ClockSync::onTransportStop() {
     // Turn off beat LED
     _beatLedActive = false;
     digitalWrite(LED_BEAT_PIN, LOW);
-    
-    DEBUG_PRINTLN("Clock Sync: Transport Stop");
 }
 
 void ClockSync::reset() {
@@ -119,8 +111,6 @@ void ClockSync::reset() {
     setPulseLow();
     _beatLedActive = false;
     digitalWrite(LED_BEAT_PIN, LOW);
-    
-    DEBUG_PRINTLN("Clock Sync: Reset");
 }
 
 void ClockSync::setPPQN(uint8_t ppqn) {
@@ -129,9 +119,6 @@ void ClockSync::setPPQN(uint8_t ppqn) {
     
     _ppqn = ppqn;
     calculateClockDivider();
-    
-    DEBUG_PRINT("Clock Sync: PPQN set to ");
-    DEBUG_PRINTLN(_ppqn);
 }
 
 void ClockSync::setPulseHigh() {
@@ -152,8 +139,6 @@ void ClockSync::updateCableDetection() {
     // Log state change
     if (detected != _cableInserted) {
         _cableInserted = detected;
-        DEBUG_PRINT("Sync cable: ");
-        DEBUG_PRINTLN(_cableInserted ? "INSERTED" : "REMOVED");
     }
 }
 
@@ -162,10 +147,4 @@ void ClockSync::calculateClockDivider() {
     // MIDI sends 24 clocks per quarter note
     // We want to output _ppqn pulses per quarter note
     _clockDivider = MIDI_CLOCKS_PER_QN / _ppqn;
-    
-    DEBUG_PRINT("Clock divider: ");
-    DEBUG_PRINT(_clockDivider);
-    DEBUG_PRINT(" (");
-    DEBUG_PRINT(_ppqn);
-    DEBUG_PRINTLN(" PPQN)");
 }

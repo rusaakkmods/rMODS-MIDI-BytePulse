@@ -38,8 +38,6 @@ void MidiHandler::begin() {
     // DIN MIDI is only for data messages (notes, CC, etc.)
     
     midiDIN.turnThruOff();
-    
-    DEBUG_PRINTLN("MIDI OK");
 }
 
 void MidiHandler::update() {
@@ -159,7 +157,6 @@ void MidiHandler::update() {
 
 void MidiHandler::setClockSource(ClockSource source) {
     _clockSource = source;
-    DEBUG_PRINTLN("Clk src");
 }
 
 void MidiHandler::sendStart() {
@@ -169,7 +166,6 @@ void MidiHandler::sendStart() {
     
     _isPlaying = true;
     _clockCount = 0;
-    DEBUG_PRINTLN("Start");
 }
 
 void MidiHandler::sendContinue() {
@@ -178,7 +174,6 @@ void MidiHandler::sendContinue() {
     midiDIN.sendRealTime(midi::Continue);
     
     _isPlaying = true;
-    DEBUG_PRINTLN("Cont");
 }
 
 void MidiHandler::sendStop() {
@@ -187,7 +182,6 @@ void MidiHandler::sendStop() {
     midiDIN.sendRealTime(midi::Stop);
     
     _isPlaying = false;
-    DEBUG_PRINTLN("Stop");
 }
 
 void MidiHandler::sendCC(uint8_t cc, uint8_t value, uint8_t channel) {
@@ -340,7 +334,6 @@ void MidiHandler::handleDINStart() {
             _instance->_clockSync->onTransportStart();
         }
         
-        DEBUG_PRINTLN("DIN Start");
     }
 }
 
@@ -359,7 +352,6 @@ void MidiHandler::handleDINContinue() {
             _instance->_clockSync->onTransportContinue();
         }
         
-        DEBUG_PRINTLN("DIN Cont");
     }
 }
 
@@ -378,7 +370,6 @@ void MidiHandler::handleDINStop() {
             _instance->_clockSync->onTransportStop();
         }
         
-        DEBUG_PRINTLN("DIN Stop");
     }
 }
 
@@ -394,7 +385,6 @@ void MidiHandler::handleDINSystemReset() {
         _instance->_clockSync->reset();
     }
     
-    DEBUG_PRINTLN("Reset");
 }
 
 // ============================================================================
@@ -416,12 +406,10 @@ void MidiHandler::updateActiveClockSource() {
             if (isUSBClockActive()) {
                 if (_activeClockSource != CLOCK_FORCE_USB) {
                     _activeClockSource = CLOCK_FORCE_USB;
-                    DEBUG_PRINTLN("->USB");
                 }
             } else if (isDINClockActive()) {
                 if (_activeClockSource != CLOCK_FORCE_DIN) {
                     _activeClockSource = CLOCK_FORCE_DIN;
-                    DEBUG_PRINTLN("->DIN");
                 }
             } else {
                 _activeClockSource = CLOCK_AUTO;
