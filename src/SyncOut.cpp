@@ -17,6 +17,7 @@ void SyncOut::begin() {
   
   ppqnCounter = 0;
   isPlaying = false;
+  usbIsPlaying = false;
   clockState = false;
   ledState = false;
   activeSource = CLOCK_SOURCE_NONE;
@@ -24,19 +25,19 @@ void SyncOut::begin() {
 }
 
 void SyncOut::handleClock(ClockSource source) {
-  // Update USB clock timestamp
-  if (source == CLOCK_SOURCE_USB) {
-    lastUSBClockTime = millis();
+  // If USB clock received while USB is playing, USB becomes master
+  if (source == CLOCK_SOURCE_USB && usbIsPlaying) {
     activeSource = CLOCK_SOURCE_USB;
+    lastUSBClockTime = millis();
   }
   
-  // Only process if this is the active source or USB has timed out
-  if (source == CLOCK_SOURCE_DIN) {
-    unsigned long now = millis();
-    if (lastUSBClockTime > 0 && (now - lastUSBClockTime) < USB_CLOCK_TIMEOUT_MS) {
-      // USB is active, ignore DIN clock
-      return;
-    }
+  // If DIN clock received but USB is master, ignore DIN
+  if (source == CLOCK_SOURCE_DIN && activeSource == CLOCK_SOURCE_USB) {
+    return;
+  }
+  
+  // If DIN clock and USB is not master, DIN is master
+  if (source == CLOCK_SOURCE_DIN && activeSource != CLOCK_SOURCE_USB) {
     activeSource = CLOCK_SOURCE_DIN;
   }
   
@@ -60,69 +61,73 @@ void SyncOut::handleClock(ClockSource source) {
 }
 
 void SyncOut::handleStart(ClockSource source) {
-  // Update USB clock timestamp
+  // Track USB playing state and make it master
   if (source == CLOCK_SOURCE_USB) {
-    lastUSBClockTime = millis();
+    usbIsPlaying = true;
     activeSource = CLOCK_SOURCE_USB;
+    lastUSBClockTime = millis();
+    isPlaying = true;  // Always start playing when USB starts
+    ppqnCounter = 0;
+    
+    // Immediate outputs
+    digitalWrite(CLOCK_OUT_PIN, HIGH);
+    digitalWrite(LED_BEAT_PIN, HIGH);
+    clockState = true;
+    ledState = true;
+    lastPulseTime = micros();
+    return;
   }
   
-  // Only process if this is the active source or USB has timed out
-  if (source == CLOCK_SOURCE_DIN) {
-    unsigned long now = millis();
-    if (lastUSBClockTime > 0 && (now - lastUSBClockTime) < USB_CLOCK_TIMEOUT_MS) {
-      // USB is active, ignore DIN start
-      return;
-    }
+  // If USB is playing, ignore DIN start
+  if (source == CLOCK_SOURCE_DIN && usbIsPlaying) {
+    return;
+  }
+  
+  // If DIN start and USB not playing, DIN is master
+  if (source == CLOCK_SOURCE_DIN && !usbIsPlaying) {
     activeSource = CLOCK_SOURCE_DIN;
+    isPlaying = true;
+    ppqnCounter = 0;
+    
+    // Immediate outputs
+    digitalWrite(CLOCK_OUT_PIN, HIGH);
+    digitalWrite(LED_BEAT_PIN, HIGH);
+    clockState = true;
+    ledState = true;
+    lastPulseTime = micros();
   }
-  
-  isPlaying = true;
-  ppqnCounter = 0;
-  
-  // Immediate outputs
-  digitalWrite(CLOCK_OUT_PIN, HIGH);
-  digitalWrite(LED_BEAT_PIN, HIGH);
-  clockState = true;
-  ledState = true;
-  lastPulseTime = micros();
 }
 
 void SyncOut::handleStop(ClockSource source) {
-  // Update USB clock timestamp
+  // Track USB playing state
   if (source == CLOCK_SOURCE_USB) {
-    lastUSBClockTime = millis();
+    usbIsPlaying = false;
+    activeSource = CLOCK_SOURCE_NONE;  // Release control, allow DIN to take over
+    // Don't stop playing if DIN might still be running - just release USB control
+    return;
   }
   
-  // Only process if this is the active source or USB has timed out
-  if (source == CLOCK_SOURCE_DIN) {
-    unsigned long now = millis();
-    if (lastUSBClockTime > 0 && (now - lastUSBClockTime) < USB_CLOCK_TIMEOUT_MS) {
-      // USB is active, ignore DIN stop
-      return;
-    }
-    activeSource = CLOCK_SOURCE_DIN;
+  // If USB is playing, ignore DIN stop
+  if (source == CLOCK_SOURCE_DIN && usbIsPlaying) {
+    return;
   }
   
-  isPlaying = false;
-  ppqnCounter = 0;
-  
-  // Immediate turn off
-  digitalWrite(CLOCK_OUT_PIN, LOW);
-  digitalWrite(LED_BEAT_PIN, LOW);
-  clockState = false;
-  ledState = false;
+  // If DIN stop and USB not playing, process it
+  if (source == CLOCK_SOURCE_DIN && !usbIsPlaying) {
+    activeSource = CLOCK_SOURCE_NONE;
+    isPlaying = false;
+    ppqnCounter = 0;
+    
+    // Immediate turn off
+    digitalWrite(CLOCK_OUT_PIN, LOW);
+    digitalWrite(LED_BEAT_PIN, LOW);
+    clockState = false;
+    ledState = false;
+  }
 }
 
 void SyncOut::update() {
   unsigned long currentTime = micros();
-  
-  // Check for USB clock timeout
-  if (activeSource == CLOCK_SOURCE_USB) {
-    unsigned long now = millis();
-    if (lastUSBClockTime > 0 && (now - lastUSBClockTime) >= USB_CLOCK_TIMEOUT_MS) {
-      activeSource = CLOCK_SOURCE_NONE;
-    }
-  }
   
   // Turn off clock pulse after pulse width
   if (clockState && (currentTime - lastPulseTime >= PULSE_WIDTH_US)) {

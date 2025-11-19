@@ -33,6 +33,7 @@ private:
   bool ledState = false;
   byte ppqnCounter = 0;
   bool isPlaying = false;
+  bool usbIsPlaying = false;
   ClockSource activeSource = CLOCK_SOURCE_NONE;
 };
 
