@@ -111,7 +111,8 @@ void MIDIHandler::handleSystemExclusive(byte* data, unsigned size) {
 }
 
 void MIDIHandler::handleClock() {
-  // Send clock immediately without buffering (time-critical, high frequency)
+  // Send clock immediately (time-critical, high frequency)
+  // Don't flush here - let main loop handle batched flush for efficiency
   midiEventPacket_t event = {0x0F, 0xF8, 0, 0};
   MidiUSB.sendMIDI(event);
   
@@ -160,6 +161,7 @@ void MIDIHandler::handleActiveSensing() {
   // Send immediately without buffering (realtime message)
   midiEventPacket_t event = {0x0F, 0xFE, 0, 0};
   MidiUSB.sendMIDI(event);
+  MidiUSB.flush();  // Flush to prevent accumulation
 }
 
 void MIDIHandler::handleSystemReset() {

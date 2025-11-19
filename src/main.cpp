@@ -92,7 +92,15 @@ void loop() {
   processUSBMIDI();
   midiHandler.update();
   
+  // Flush batched messages
   midiHandler.flushBuffer();
+  
+  // Safety: periodic flush every 100 loops to catch any orphaned messages
+  static uint16_t loopCounter = 0;
+  if (++loopCounter >= 100) {
+    midiHandler.flushBuffer();
+    loopCounter = 0;
+  }
   
   // UI updates - throttled to reduce blocking
   static unsigned long lastUIUpdate = 0;
