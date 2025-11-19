@@ -7,6 +7,7 @@
 
 #define PULSE_WIDTH_US 5000
 #define PPQN 24
+#define CLOCK_OUT_PPQN 24  // Output 24 PPQN (MIDI clock standard - universal compatibility)
 
 void SyncOut::begin() {
   pinMode(CLOCK_OUT_PIN, OUTPUT);
@@ -93,17 +94,23 @@ void SyncOut::handleClock(ClockSource source) {
   
   if (!isPlaying) return;
   
-  // Always output clock pulse
-  if (isJackConnected()) {
-    digitalWrite(CLOCK_OUT_PIN, HIGH);
+  // Output clock pulse at 2 PPQN (every 12 MIDI clocks)
+  // PPQN 24 / OUTPUT 2 = divider 12
+  if (ppqnCounter % (PPQN / CLOCK_OUT_PPQN) == 0) {
+    if (isJackConnected()) {
+      digitalWrite(CLOCK_OUT_PIN, HIGH);
+      clockState = true;
+      lastPulseTime = micros();
+    }
   }
-  clockState = true;
-  lastPulseTime = micros();
   
   // Handle beat LED on downbeat (ppqnCounter == 0)
   if (ppqnCounter == 0) {
     digitalWrite(LED_BEAT_PIN, HIGH);
     ledState = true;
+    if (!clockState) {
+      lastPulseTime = micros();  // Sync LED timing with clock if not already pulsing
+    }
   }
   
   // Increment counter after processing current beat
