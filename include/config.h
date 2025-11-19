@@ -17,9 +17,9 @@
 #define SYNC_DETECT_PIN     4
 
 // Analog Inputs (Potentiometers)
-#define POT_VOLUME_PIN     A0
-#define POT_PITCH_PIN     A1
-#define POT_MODULATION_PIN  A2
+#define POT_VOL_PIN         A0
+#define POT_MOD1_PIN        A1
+#define POT_MOD2_PIN        A2
 
 // Rotary Encoder
 #define ENCODER_A_PIN       2
@@ -36,6 +36,6 @@
 
 // TM1637 7-Segment Display
 #define TM1637_CLK_PIN      6
-#define TM1637_DIO_PIN     10
+#define TM1637_DIO_PIN      7
 
 #endif  // CONFIG_H

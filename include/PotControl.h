@@ -13,11 +13,14 @@ public:
   void update();
 
 private:
-  void readPot(uint8_t pin, uint8_t& lastValue, uint8_t ccNumber);
+  void readVolume();
+  void readPitch();
+  void readModulation();
   void sendCC(uint8_t ccNumber, uint8_t value);
+  void sendPitchBend(int16_t value);
   
   uint8_t lastVolume = 0;
-  uint8_t lastPitch = 0;
+  uint16_t lastPitch = 0;
   uint8_t lastModulation = 0;
 };
 
