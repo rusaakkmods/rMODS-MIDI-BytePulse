@@ -42,6 +42,7 @@
 
 // Display Configuration
 #define DISPLAY_ENABLED     false  // Set to false to disable display
+#define POTS_ENABLED        false  // Set to false to disable pot controls (max stability)
 
 
 #define SERIAL_DEBUG        false

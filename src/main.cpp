@@ -64,13 +64,17 @@ void setup() {
   
   bpmCounter.setPotControl(&pots);
   bpmCounter.setTransportControl(&transport);
+  
+  #if POTS_ENABLED
   pots.setBPMCounter(&bpmCounter);
+  pots.begin();
+  #endif
+  
   transport.setBPMCounter(&bpmCounter);
   syncOut.setBPMCounter(&bpmCounter);
   midiHandler.setSyncOut(&syncOut);
   midiHandler.begin();
   transport.begin();
-  pots.begin();
   
   #if SERIAL_DEBUG
   DEBUG_PRINTLN("Ready.");
@@ -78,17 +82,29 @@ void setup() {
 }
 
 void loop() {  
+  // Time-critical: MIDI and sync first
   syncOut.update();
   
   processUSBMIDI();
   midiHandler.update();
+  
+  // Second MIDI pass for better responsiveness
+  processUSBMIDI();
+  midiHandler.update();
+  
   midiHandler.flushBuffer();
   
-  // UI updates
-  transport.update();
-  pots.update();
+  // UI updates - throttled to reduce blocking
+  static unsigned long lastUIUpdate = 0;
+  if (millis() - lastUIUpdate >= 10) {
+    transport.update();
+    #if POTS_ENABLED
+    pots.update();
+    #endif
+    lastUIUpdate = millis();
+  }
   
-  // Update beat indicator at 100Hz
+  // BPM calculation and display updates
   static unsigned long lastDisplayUpdate = 0;
   if (millis() - lastDisplayUpdate >= 10) {
     bpmCounter.update();
