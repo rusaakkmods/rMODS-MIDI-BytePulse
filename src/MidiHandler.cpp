@@ -106,7 +106,7 @@ void MIDIHandler::handleClock() {
   MidiUSB.flush();
   
   if (syncOut) {
-    syncOut->handleClock();
+    syncOut->handleClock(CLOCK_SOURCE_DIN);
   }
 }
 
@@ -116,7 +116,7 @@ void MIDIHandler::handleStart() {
   MidiUSB.flush();
   
   if (syncOut) {
-    syncOut->handleStart();
+    syncOut->handleStart(CLOCK_SOURCE_DIN);
   }
 }
 
@@ -126,7 +126,7 @@ void MIDIHandler::handleContinue() {
   MidiUSB.flush();
   
   if (syncOut) {
-    syncOut->handleStart();
+    syncOut->handleStart(CLOCK_SOURCE_DIN);
   }
 }
 
@@ -136,7 +136,7 @@ void MIDIHandler::handleStop() {
   MidiUSB.flush();
   
   if (syncOut) {
-    syncOut->handleStop();
+    syncOut->handleStop(CLOCK_SOURCE_DIN);
   }
 }
 
