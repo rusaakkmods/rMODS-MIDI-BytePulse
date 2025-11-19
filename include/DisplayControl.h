@@ -6,7 +6,7 @@
 #define DISPLAY_CONTROL_H
 
 #include <Arduino.h>
-#include <TM1637Display.h>
+#include <TM1637TinyDisplay.h>
 
 class DisplayControl {
 public:
@@ -19,9 +19,10 @@ public:
   void clear();
 
 private:
-  TM1637Display display;
+  TM1637TinyDisplay display;
   bool beatState = false;
   uint8_t beatPosition = 0;  // Track which decimal to light (0-3)
+  uint8_t currentSegments[4] = {0x00, 0x00, 0x00, 0x00};  // Track current display state
 };
 
 #endif  // DISPLAY_CONTROL_H
