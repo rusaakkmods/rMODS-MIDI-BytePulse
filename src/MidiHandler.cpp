@@ -112,9 +112,16 @@ void MIDIHandler::handleSystemExclusive(byte* data, unsigned size) {
 
 void MIDIHandler::handleClock() {
   // Send clock immediately (time-critical, high frequency)
-  // Don't flush here - let main loop handle batched flush for efficiency
   midiEventPacket_t event = {0x0F, 0xF8, 0, 0};
   MidiUSB.sendMIDI(event);
+  
+  // Flush every 4 clocks to prevent USB buffer overflow
+  // At 120 BPM: 48 clocks/sec, 4 clocks = ~83ms
+  static uint8_t clockCounter = 0;
+  if (++clockCounter >= 4) {
+    MidiUSB.flush();
+    clockCounter = 0;
+  }
   
   if (syncOut) {
     syncOut->handleClock(CLOCK_SOURCE_DIN);

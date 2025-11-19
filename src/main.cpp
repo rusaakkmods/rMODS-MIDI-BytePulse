@@ -14,25 +14,28 @@ MIDIHandler midiHandler;
 SyncOut syncOut;
 
 void processUSBMIDI() {
-  midiEventPacket_t rx = MidiUSB.read();
-  
-  if (rx.header == 0) return;
-  
-  // Handle realtime messages
-  if (rx.header == 0x0F) {
-    switch (rx.byte1) {
-      case 0xF8:  // Clock
-        syncOut.handleClock(CLOCK_SOURCE_USB);
-        break;
-      case 0xFA:  // Start
-        syncOut.handleStart(CLOCK_SOURCE_USB);
-        break;
-      case 0xFB:  // Continue
-        syncOut.handleStart(CLOCK_SOURCE_USB);
-        break;
-      case 0xFC:  // Stop
-        syncOut.handleStop(CLOCK_SOURCE_USB);
-        break;
+  // Drain entire USB receive buffer to prevent message backup
+  while (true) {
+    midiEventPacket_t rx = MidiUSB.read();
+    
+    if (rx.header == 0) break;  // No more messages
+    
+    // Handle realtime messages
+    if (rx.header == 0x0F) {
+      switch (rx.byte1) {
+        case 0xF8:  // Clock
+          syncOut.handleClock(CLOCK_SOURCE_USB);
+          break;
+        case 0xFA:  // Start
+          syncOut.handleStart(CLOCK_SOURCE_USB);
+          break;
+        case 0xFB:  // Continue
+          syncOut.handleStart(CLOCK_SOURCE_USB);
+          break;
+        case 0xFC:  // Stop
+          syncOut.handleStop(CLOCK_SOURCE_USB);
+          break;
+      }
     }
   }
 }
@@ -58,10 +61,7 @@ void loop() {
   // Time-critical: Sync output first
   syncOut.update();
   
-  // MIDI processing - dual pass for responsiveness
-  processUSBMIDI();
-  midiHandler.update();
-  
+  // MIDI processing
   processUSBMIDI();
   midiHandler.update();
   
