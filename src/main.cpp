@@ -11,12 +11,14 @@
 #include "TransportControl.h"
 #include "PotControl.h"
 #include "DisplayControl.h"
+#include "BPMCounter.h"
 
 MIDIHandler midiHandler;
 SyncOut syncOut;
 TransportControl transport;
 PotControl pots;
 DisplayControl display;
+BPMCounter bpmCounter;
 
 void processUSBMIDI() {
   midiEventPacket_t rx = MidiUSB.read();
@@ -52,7 +54,8 @@ void setup() {
   
   syncOut.begin();
   display.begin();
-  syncOut.setDisplayControl(&display);
+  bpmCounter.setDisplayControl(&display);
+  syncOut.setBPMCounter(&bpmCounter);
   midiHandler.setSyncOut(&syncOut);
   midiHandler.begin();
   transport.begin();
@@ -82,6 +85,7 @@ void loop() {
   // Lower priority UI updates (only after MIDI is processed)
   transport.update();
   pots.update();
+  bpmCounter.update();  // Handle beat off timing
   
   // Update display state indicator (only when transport changes)
   static unsigned long lastDisplayCheck = 0;

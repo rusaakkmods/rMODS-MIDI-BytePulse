@@ -13,7 +13,7 @@ enum ClockSource {
   CLOCK_SOURCE_USB
 };
 
-class DisplayControl;
+class BPMCounter;
 
 class SyncOut {
 public:
@@ -23,7 +23,7 @@ public:
   void handleStop(ClockSource source);
   void update();
   ClockSource getActiveSource() { return activeSource; }
-  void setDisplayControl(DisplayControl* dc) { displayControl = dc; }
+  void setBPMCounter(BPMCounter* bc) { bpmCounter = bc; }
   unsigned long getClockInterval() { return avgUSBClockInterval; }
   void updateDisplayBeat();
 
@@ -47,7 +47,7 @@ private:
   bool isPlaying = false;
   bool usbIsPlaying = false;
   ClockSource activeSource = CLOCK_SOURCE_NONE;
-  DisplayControl* displayControl = nullptr;
+  BPMCounter* bpmCounter = nullptr;
 };
 
 #endif  // SYNC_OUT_H

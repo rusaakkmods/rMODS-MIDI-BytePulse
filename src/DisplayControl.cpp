@@ -20,26 +20,6 @@ void DisplayControl::beatOn() {
     data[beatPosition] = 0x80;
     display.setSegments(data);
     
-    // When back to first position, calculate BPM
-    if (beatPosition == 0) {
-      unsigned long now = millis();
-      if (lastBeatTime > 0) {
-        unsigned long interval = now - lastBeatTime;
-        // Interval is for 4 beats (one measure), so divide by 4 to get per-beat interval
-        // BPM = 60,000 ms/min / (interval_ms / 4)
-        // Simplified: BPM = 240,000 / interval_ms
-        currentBPM = 240000UL / interval;
-        
-        #if SERIAL_DEBUG
-        DEBUG_PRINT(interval);
-        DEBUG_PRINT("ms = ");
-        DEBUG_PRINT(currentBPM);
-        DEBUG_PRINTLN(" BPM");
-        #endif
-      }
-      lastBeatTime = now;
-    }
-    
     // Move to next position for next beat
     beatPosition = (beatPosition + 1) % 4;
     beatState = true;
@@ -61,21 +41,15 @@ void DisplayControl::showStopIndicator() {
   display.setSegments(data);
   beatState = false;
   beatPosition = 0;  // Reset to first position when stopped
-  
-  #if SERIAL_DEBUG
-  if (currentBPM > 0) {
-    DEBUG_PRINT("Last BPM: ");
-    DEBUG_PRINTLN(currentBPM);
-  }
-  #endif
 }
 
-void DisplayControl::reset() {
-  beatPosition = 0;  // Reset to first position
-  lastBeatTime = 0;  // Reset timing for next measurement
-  // Don't reset currentBPM - keep last known value
+void DisplayControl::showBPM(uint16_t bpm) {
+  // Show BPM right-aligned (e.g., " 120")
+  display.showNumberDec(bpm, false, 4, 0);
 }
 
-uint16_t DisplayControl::getBPM() {
-  return currentBPM;
+void DisplayControl::clear() {
+  uint8_t data[] = {0x00, 0x00, 0x00, 0x00};
+  display.setSegments(data);
+  beatPosition = 0;
 }

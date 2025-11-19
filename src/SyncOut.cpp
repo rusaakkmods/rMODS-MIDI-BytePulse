@@ -3,7 +3,7 @@
  */
 
 #include "SyncOut.h"
-#include "DisplayControl.h"
+#include "BPMCounter.h"
 #include "config.h"
 
 #define PULSE_WIDTH_US 5000
@@ -101,9 +101,9 @@ void SyncOut::handleClock(ClockSource source) {
     digitalWrite(LED_BEAT_PIN, HIGH);
     ledState = true;
     
-    // Update display beat indicator on downbeat
-    if (displayControl) {
-      displayControl->beatOn();
+    // Update BPM counter on downbeat
+    if (bpmCounter) {
+      bpmCounter->handleBeat();
     }
   }
   
@@ -123,8 +123,8 @@ void SyncOut::handleStart(ClockSource source) {
     isPlaying = true;
     ppqnCounter = 0;
     
-    if (displayControl) {
-      displayControl->reset();
+    if (bpmCounter) {
+      bpmCounter->reset();
     }
     
     if (isJackConnected()) {
@@ -146,8 +146,8 @@ void SyncOut::handleStart(ClockSource source) {
     isPlaying = true;
     ppqnCounter = 0;
     
-    if (displayControl) {
-      displayControl->reset();
+    if (bpmCounter) {
+      bpmCounter->reset();
     }
     
     if (isJackConnected()) {
@@ -167,10 +167,10 @@ void SyncOut::handleStop(ClockSource source) {
     avgUSBClockInterval = 0;
     prevUSBClockTime = 0;
     
-    if (displayControl) {
-      displayControl->reset();
-      displayControl->showStopIndicator();
+    if (bpmCounter) {
+      bpmCounter->reset();
     }
+    
     return;
   }
   
@@ -188,9 +188,8 @@ void SyncOut::handleStop(ClockSource source) {
     clockState = false;
     ledState = false;
     
-    if (displayControl) {
-      displayControl->reset();
-      displayControl->showStopIndicator();
+    if (bpmCounter) {
+      bpmCounter->reset();
     }
   }
 }
@@ -208,11 +207,6 @@ void SyncOut::update() {
   if (ledState && (currentTime - lastPulseTime >= PULSE_WIDTH_US)) {
     digitalWrite(LED_BEAT_PIN, LOW);
     ledState = false;
-    
-    // Turn off display beat indicator
-    if (displayControl) {
-      displayControl->beatOff();
-    }
   }
 }
 

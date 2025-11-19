@@ -15,15 +15,13 @@ public:
   void beatOn();
   void beatOff();
   void showStopIndicator();
-  void reset();
-  uint16_t getBPM();
+  void showBPM(uint16_t bpm);
+  void clear();
 
 private:
   TM1637Display display;
   bool beatState = false;
   uint8_t beatPosition = 0;  // Track which decimal to light (0-3)
-  unsigned long lastBeatTime = 0;
-  uint16_t currentBPM = 0;
 };
 
 #endif  // DISPLAY_CONTROL_H
