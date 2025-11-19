@@ -26,9 +26,12 @@ public:
 private:
   void pulseClock();
   void pulseLED();
+  void checkUSBTimeout();
   
   unsigned long lastPulseTime = 0;
   unsigned long lastUSBClockTime = 0;
+  unsigned long prevUSBClockTime = 0;
+  unsigned long avgUSBClockInterval = 0;
   bool clockState = false;
   bool ledState = false;
   byte ppqnCounter = 0;

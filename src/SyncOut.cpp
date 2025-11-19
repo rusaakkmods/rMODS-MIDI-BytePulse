@@ -22,13 +22,29 @@ void SyncOut::begin() {
   ledState = false;
   activeSource = CLOCK_SOURCE_NONE;
   lastUSBClockTime = 0;
+  prevUSBClockTime = 0;
+  avgUSBClockInterval = 0;
 }
 
 void SyncOut::handleClock(ClockSource source) {
   // If USB clock received while USB is playing, USB becomes master
   if (source == CLOCK_SOURCE_USB && usbIsPlaying) {
+    unsigned long now = millis();
+    
+    // Calculate interval between clocks for adaptive timeout
+    if (prevUSBClockTime > 0) {
+      unsigned long interval = now - prevUSBClockTime;
+      // Simple moving average (weight new interval more)
+      if (avgUSBClockInterval == 0) {
+        avgUSBClockInterval = interval;
+      } else {
+        avgUSBClockInterval = (avgUSBClockInterval * 3 + interval * 5) / 8;
+      }
+    }
+    
+    prevUSBClockTime = now;
+    lastUSBClockTime = now;
     activeSource = CLOCK_SOURCE_USB;
-    lastUSBClockTime = millis();
   }
   
   // If DIN clock received but USB is master, ignore DIN
@@ -66,6 +82,8 @@ void SyncOut::handleStart(ClockSource source) {
     usbIsPlaying = true;
     activeSource = CLOCK_SOURCE_USB;
     lastUSBClockTime = millis();
+    prevUSBClockTime = 0;  // Reset for fresh interval calculation
+    avgUSBClockInterval = 0;
     isPlaying = true;  // Always start playing when USB starts
     ppqnCounter = 0;
     
@@ -103,6 +121,8 @@ void SyncOut::handleStop(ClockSource source) {
   if (source == CLOCK_SOURCE_USB) {
     usbIsPlaying = false;
     activeSource = CLOCK_SOURCE_NONE;  // Release control, allow DIN to take over
+    avgUSBClockInterval = 0;  // Reset interval tracking
+    prevUSBClockTime = 0;
     // Don't stop playing if DIN might still be running - just release USB control
     return;
   }
@@ -129,6 +149,9 @@ void SyncOut::handleStop(ClockSource source) {
 void SyncOut::update() {
   unsigned long currentTime = micros();
   
+  // Check for USB timeout
+  checkUSBTimeout();
+  
   // Turn off clock pulse after pulse width
   if (clockState && (currentTime - lastPulseTime >= PULSE_WIDTH_US)) {
     digitalWrite(CLOCK_OUT_PIN, LOW);
@@ -139,6 +162,28 @@ void SyncOut::update() {
   if (ledState && (currentTime - lastPulseTime >= PULSE_WIDTH_US)) {
     digitalWrite(LED_BEAT_PIN, LOW);
     ledState = false;
+  }
+}
+
+void SyncOut::checkUSBTimeout() {
+  if (!usbIsPlaying || avgUSBClockInterval == 0) return;
+  
+  unsigned long now = millis();
+  unsigned long timeSinceLastClock = now - lastUSBClockTime;
+  
+  // Timeout = 3x the average interval (handles tempo variations)
+  // At 30 BPM: 24 clocks/beat, 30 beats/min = 720 clocks/min = 12 clocks/sec
+  // Interval = 1000ms / 12 = 83.3ms per clock
+  // Timeout = 83.3 * 3 = 250ms
+  // At 400 BPM: interval = 6.25ms, timeout = 18.75ms
+  unsigned long timeoutThreshold = avgUSBClockInterval * 3;
+  
+  if (timeSinceLastClock > timeoutThreshold) {
+    // USB has stopped sending clocks without sending stop message
+    usbIsPlaying = false;
+    activeSource = CLOCK_SOURCE_NONE;
+    avgUSBClockInterval = 0;
+    prevUSBClockTime = 0;
   }
 }
 
