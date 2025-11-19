@@ -17,6 +17,8 @@ public:
   void setDisplay(HC595Display* disp) { display = disp; }
   void setBPMCounter(BPMCounter* counter) { bpmCounter = counter; }
   bool isVolumeDisplayActive() const { return volumeDisplayActive; }
+  bool isPitchDisplayActive() const { return pitchDisplayActive; }
+  bool isAnyControlDisplayActive() const { return volumeDisplayActive || pitchDisplayActive; }
 
 private:
   void readVolume();
@@ -30,7 +32,9 @@ private:
   uint8_t lastModulation = 0;
   unsigned long lastUpdate = 0;
   unsigned long volumeDisplayTime = 0;
+  unsigned long pitchDisplayTime = 0;
   bool volumeDisplayActive = false;
+  bool pitchDisplayActive = false;
   
   HC595Display* display = nullptr;
   BPMCounter* bpmCounter = nullptr;

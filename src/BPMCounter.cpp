@@ -92,15 +92,15 @@ void BPMCounter::update() {
   }
   
   // Update BPM display if changed by threshold
-  // BUT don't override volume display if it's active
+  // BUT don't override control displays if they're active
   if (bpmNeedsUpdate && display) {
-    // Check if volume display is active - if so, skip BPM update
-    if (!potControl || !potControl->isVolumeDisplayActive()) {
+    // Check if any control display is active - if so, skip BPM update
+    if (!potControl || !potControl->isAnyControlDisplayActive()) {
       display->showBPM(currentBPM);
       displayedBPM = currentBPM;
       bpmNeedsUpdate = false;
     }
-    // If volume is showing, bpmNeedsUpdate stays true and will update after volume timeout
+    // If control is showing, bpmNeedsUpdate stays true and will update after timeout
   }
   
   // Turn on 4th digit decimal on beat

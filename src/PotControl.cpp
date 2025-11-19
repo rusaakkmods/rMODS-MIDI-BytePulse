@@ -15,7 +15,7 @@
 #define THRESHOLD_7BIT 4    // Was 2, now 4 (about 3% change required)
 #define THRESHOLD_14BIT 32  // Was 8, now 32 (about 3% change required)
 #define POT_UPDATE_INTERVAL 50  // Only read pots every 50ms
-#define VOLUME_DISPLAY_DURATION 2000  // Show volume for 2 seconds
+#define CONTROL_DISPLAY_DURATION 2000  // Show control for 2 seconds
 
 void PotControl::begin() {
   pinMode(POT_VOL_PIN, INPUT);
@@ -39,15 +39,28 @@ void PotControl::update() {
   readPitch();
   readModulation();
   
-  // Check if volume display timeout expired - restore BPM display
+  // Check if volume display timeout expired
   if (volumeDisplayActive && display && bpmCounter) {
-    if (now - volumeDisplayTime >= VOLUME_DISPLAY_DURATION) {
+    if (now - volumeDisplayTime >= CONTROL_DISPLAY_DURATION) {
       volumeDisplayActive = false;
       // Restore appropriate display based on play state
       if (bpmCounter->getBPM() > 0) {
         display->showBPM(bpmCounter->getBPM());
       } else {
-        // Restore stopped state display
+        display->showStopped();
+        display->setDecimalPoint(3, true);  // Show decimal when stopped
+      }
+    }
+  }
+  
+  // Check if pitch display timeout expired
+  if (pitchDisplayActive && display && bpmCounter) {
+    if (now - pitchDisplayTime >= CONTROL_DISPLAY_DURATION) {
+      pitchDisplayActive = false;
+      // Restore appropriate display based on play state
+      if (bpmCounter->getBPM() > 0) {
+        display->showBPM(bpmCounter->getBPM());
+      } else {
         display->showStopped();
         display->setDecimalPoint(3, true);  // Show decimal when stopped
       }
@@ -62,11 +75,12 @@ void PotControl::readVolume() {
     lastVolume = reading;
     sendCC(CC_VOLUME, lastVolume);
     
-    // Show volume on display for 2 seconds
+    // Show volume on display for 2 seconds, override pitch if active
     if (display) {
       display->showVolume(lastVolume);
       volumeDisplayActive = true;
       volumeDisplayTime = millis();
+      pitchDisplayActive = false;  // Override pitch display
       
       // Set decimal based on play state
       if (bpmCounter && bpmCounter->isPlaying()) {
@@ -86,6 +100,25 @@ void PotControl::readPitch() {
     lastPitch = reading;
     int16_t pitchValue = map(lastPitch, 0, 1023, -8192, 8191);
     sendPitchBend(pitchValue);
+    
+    // Convert pitch bend to 0-127 for display
+    uint8_t displayValue = map(lastPitch, 0, 1023, 0, 127);
+    
+    // Show pitch on display for 2 seconds, override volume if active
+    if (display) {
+      display->showPitch(displayValue);
+      pitchDisplayActive = true;
+      pitchDisplayTime = millis();
+      volumeDisplayActive = false;  // Override volume display
+      
+      // Set decimal based on play state
+      if (bpmCounter && bpmCounter->isPlaying()) {
+        // Blinking will be handled by beat indicator in bpmCounter
+      } else {
+        // Turn off decimal when stopped
+        display->setDecimalPoint(3, false);
+      }
+    }
   }
 }
 

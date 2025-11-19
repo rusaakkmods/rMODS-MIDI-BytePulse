@@ -24,6 +24,7 @@ const uint8_t HC595Display::DIGIT_PATTERNS[10] = {
 // Special character patterns
 const uint8_t HC595Display::CHAR_T = 0x87;  // 't' (segments D,E,F,G)
 const uint8_t HC595Display::CHAR_V = 0xE3;  // 'u' (segments C,D,E) - lower u shape
+const uint8_t HC595Display::CHAR_P = 0x8C;  // 'P' (segments A,B,E,F,G)
 const uint8_t HC595Display::CHAR_DASH = 0xBF;  // '-' (segment G only)
 
 HC595Display::HC595Display(uint8_t latchPin) 
@@ -113,6 +114,31 @@ void HC595Display::showVolume(uint8_t volume) {
         _displayBuffer[1] = DIGIT_PATTERNS[volume / 100];
         _displayBuffer[2] = DIGIT_PATTERNS[(volume / 10) % 10];
         _displayBuffer[3] = DIGIT_PATTERNS[volume % 10];
+    }
+}
+
+void HC595Display::showPitch(uint8_t pitch) {
+    if (pitch > 127) pitch = 127;  // MIDI max
+    
+    // First digit shows "P" for pitch
+    _displayBuffer[0] = CHAR_P;
+    
+    // Right-align the pitch value in remaining 3 digits
+    if (pitch < 10) {
+        // Single digit: "P  X"
+        _displayBuffer[1] = 0xFF;  // Blank
+        _displayBuffer[2] = 0xFF;  // Blank
+        _displayBuffer[3] = DIGIT_PATTERNS[pitch];
+    } else if (pitch < 100) {
+        // Two digits: "P XX"
+        _displayBuffer[1] = 0xFF;  // Blank
+        _displayBuffer[2] = DIGIT_PATTERNS[pitch / 10];
+        _displayBuffer[3] = DIGIT_PATTERNS[pitch % 10];
+    } else {
+        // Three digits: "PXXX"
+        _displayBuffer[1] = DIGIT_PATTERNS[pitch / 100];
+        _displayBuffer[2] = DIGIT_PATTERNS[(pitch / 10) % 10];
+        _displayBuffer[3] = DIGIT_PATTERNS[pitch % 10];
     }
 }
 
