@@ -56,6 +56,9 @@ void setup() {
   display.begin();
   
   bpmCounter.setDisplay(&display);
+  bpmCounter.setPotControl(&pots);
+  pots.setDisplay(&display);
+  pots.setBPMCounter(&bpmCounter);
   syncOut.setBPMCounter(&bpmCounter);
   midiHandler.setSyncOut(&syncOut);
   midiHandler.begin();

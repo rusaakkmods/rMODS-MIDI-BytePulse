@@ -3,6 +3,8 @@
  */
 
 #include "PotControl.h"
+#include "HC595Display.h"
+#include "BPMCounter.h"
 #include "config.h"
 #include <MIDIUSB.h>
 
@@ -13,6 +15,7 @@
 #define THRESHOLD_7BIT 4    // Was 2, now 4 (about 3% change required)
 #define THRESHOLD_14BIT 32  // Was 8, now 32 (about 3% change required)
 #define POT_UPDATE_INTERVAL 50  // Only read pots every 50ms
+#define VOLUME_DISPLAY_DURATION 2000  // Show volume for 2 seconds
 
 void PotControl::begin() {
   pinMode(POT_VOL_PIN, INPUT);
@@ -35,6 +38,21 @@ void PotControl::update() {
   readVolume();
   readPitch();
   readModulation();
+  
+  // Check if volume display timeout expired - restore BPM display
+  if (volumeDisplayActive && display && bpmCounter) {
+    if (now - volumeDisplayTime >= VOLUME_DISPLAY_DURATION) {
+      volumeDisplayActive = false;
+      // Restore appropriate display based on play state
+      if (bpmCounter->getBPM() > 0) {
+        display->showBPM(bpmCounter->getBPM());
+      } else {
+        // Restore stopped state display
+        display->showStopped();
+        display->setDecimalPoint(3, true);  // Show decimal when stopped
+      }
+    }
+  }
 }
 
 void PotControl::readVolume() {
@@ -43,6 +61,21 @@ void PotControl::readVolume() {
   if (abs(reading - lastVolume) > THRESHOLD_7BIT) {
     lastVolume = reading;
     sendCC(CC_VOLUME, lastVolume);
+    
+    // Show volume on display for 2 seconds
+    if (display) {
+      display->showVolume(lastVolume);
+      volumeDisplayActive = true;
+      volumeDisplayTime = millis();
+      
+      // Set decimal based on play state
+      if (bpmCounter && bpmCounter->isPlaying()) {
+        // Blinking will be handled by beat indicator in bpmCounter
+      } else {
+        // Turn off decimal when stopped
+        display->setDecimalPoint(3, false);
+      }
+    }
   }
 }
 

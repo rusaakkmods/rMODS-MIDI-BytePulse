@@ -23,6 +23,7 @@ const uint8_t HC595Display::DIGIT_PATTERNS[10] = {
 
 // Special character patterns
 const uint8_t HC595Display::CHAR_T = 0x87;  // 't' (segments D,E,F,G)
+const uint8_t HC595Display::CHAR_V = 0xE3;  // 'u' (segments C,D,E) - lower u shape
 const uint8_t HC595Display::CHAR_DASH = 0xBF;  // '-' (segment G only)
 
 HC595Display::HC595Display(uint8_t latchPin) 
@@ -88,6 +89,31 @@ void HC595Display::showStopped() {
     _displayBuffer[1] = 0xFF;  // Blank
     _displayBuffer[2] = 0xFF;  // Blank
     _displayBuffer[3] = 0xFF;  // Blank (decimal will be set separately)
+}
+
+void HC595Display::showVolume(uint8_t volume) {
+    if (volume > 127) volume = 127;  // MIDI max
+    
+    // First digit shows "v" for volume
+    _displayBuffer[0] = CHAR_V;
+    
+    // Right-align the volume value in remaining 3 digits
+    if (volume < 10) {
+        // Single digit: "v  X"
+        _displayBuffer[1] = 0xFF;  // Blank
+        _displayBuffer[2] = 0xFF;  // Blank
+        _displayBuffer[3] = DIGIT_PATTERNS[volume];
+    } else if (volume < 100) {
+        // Two digits: "v XX"
+        _displayBuffer[1] = 0xFF;  // Blank
+        _displayBuffer[2] = DIGIT_PATTERNS[volume / 10];
+        _displayBuffer[3] = DIGIT_PATTERNS[volume % 10];
+    } else {
+        // Three digits: "vXXX"
+        _displayBuffer[1] = DIGIT_PATTERNS[volume / 100];
+        _displayBuffer[2] = DIGIT_PATTERNS[(volume / 10) % 10];
+        _displayBuffer[3] = DIGIT_PATTERNS[volume % 10];
+    }
 }
 
 void HC595Display::updateDisplay() {

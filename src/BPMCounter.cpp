@@ -4,6 +4,7 @@
 
 #include "BPMCounter.h"
 #include "HC595Display.h"
+#include "PotControl.h"
 #include "config.h"
 
 BPMCounter::BPMCounter() {
@@ -91,10 +92,15 @@ void BPMCounter::update() {
   }
   
   // Update BPM display if changed by threshold
+  // BUT don't override volume display if it's active
   if (bpmNeedsUpdate && display) {
-    display->showBPM(currentBPM);
-    displayedBPM = currentBPM;
-    bpmNeedsUpdate = false;
+    // Check if volume display is active - if so, skip BPM update
+    if (!potControl || !potControl->isVolumeDisplayActive()) {
+      display->showBPM(currentBPM);
+      displayedBPM = currentBPM;
+      bpmNeedsUpdate = false;
+    }
+    // If volume is showing, bpmNeedsUpdate stays true and will update after volume timeout
   }
   
   // Turn on 4th digit decimal on beat

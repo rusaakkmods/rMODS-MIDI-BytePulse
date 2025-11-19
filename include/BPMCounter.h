@@ -9,6 +9,7 @@
 #include <Arduino.h>
 
 class HC595Display;
+class PotControl;
 
 class BPMCounter {
 public:
@@ -17,8 +18,10 @@ public:
   void reset();
   void start();  // Called when playback starts
   uint16_t getBPM();
+  bool isPlaying() { return currentBPM > 0; }  // Check if currently playing
   bool hasChanged(uint8_t threshold = 2);
   void setDisplay(HC595Display* disp) { display = disp; }
+  void setPotControl(PotControl* pots) { potControl = pots; }
   void update();  // Call from main loop to handle beat off timing and BPM display
 
 private:
@@ -35,6 +38,7 @@ private:
   uint16_t pendingBPM = 0;    // Pending BPM to display
   bool bpmNeedsUpdate = false;
   HC595Display* display = nullptr;
+  PotControl* potControl = nullptr;
 };
 
 #endif  // BPM_COUNTER_H
