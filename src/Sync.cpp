@@ -132,9 +132,15 @@ void Sync::handleClock(ClockSource source) {
       lastPulseTime = micros();
     }
     
-    // Calculate BPM on every beat
+    // Calculate BPM every 4 beats
     unsigned long now = millis();
-    if (beatPosition == 3) {  // After 4th beat, before wrapping
+    
+    // Initialize timing on first beat
+    if (beatPosition == 0 && lastBeatTime == 0) {
+      lastBeatTime = now;
+    }
+    
+    if (beatPosition == 3) {  // After 4th beat, calculate BPM
       if (lastBeatTime > 0) {
         unsigned long interval = now - lastBeatTime;
         // Interval is for 4 beats (one measure at 24 PPQN)
@@ -163,8 +169,9 @@ void Sync::handleClock(ClockSource source) {
           }
         }
         #endif
+        
+        lastBeatTime = now;  // Update for next cycle
       }
-      lastBeatTime = now;
     }
     
     // Move to next beat position
