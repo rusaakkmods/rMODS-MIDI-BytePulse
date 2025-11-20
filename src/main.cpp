@@ -62,6 +62,7 @@ void setup() {
   DEBUG_PRINTLN("BPM monitoring active (change threshold: >2 BPM)");
   #endif
   
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
 
   display.begin();
   display.clear(); 
@@ -78,6 +79,32 @@ void setup() {
 }
 
 void loop() {
+  static bool lastButtonState = HIGH;
+  static bool buttonState = HIGH;
+  static unsigned long lastDebounceTime = 0;
+  const unsigned long debounceDelay = 50;
+  
+  bool buttonReading = digitalRead(BUTTON_PIN);
+  
+  if (buttonReading != lastButtonState) {
+    lastDebounceTime = millis();
+  }
+  
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    if (buttonReading != buttonState) {
+      buttonState = buttonReading;
+      
+      if (buttonState == LOW) {
+        display.setButtonPressed(true);
+        display.showBPM();
+      } else {
+        display.setButtonPressed(false);
+      }
+    }
+  }
+  
+  lastButtonState = buttonReading;
+  
   midiHandler.update();
   processUSBMIDI();
   sync.update();

@@ -106,6 +106,41 @@ void Display::setBeat(uint8_t beat) {
   currentBeat = beat % 4;
 }
 
+void Display::showBPM() {
+  if (!ledModule) return;
+  
+  if (!isPlaying) {
+    showIdle();
+    return;
+  }
+  
+  uint16_t bpm = currentBPM;
+  uint8_t digit1 = (bpm / 100) % 10;
+  uint8_t digit2 = (bpm / 10) % 10;
+  uint8_t digit3 = bpm % 10;
+  
+  uint8_t tWithDecimal = charToSegment('t') | 0b10000000;
+  ledModule->setPatternAt(0, tWithDecimal);
+  ledModule->setPatternAt(1, charToSegment('0' + digit1));
+  ledModule->setPatternAt(2, charToSegment('0' + digit2));
+  ledModule->setPatternAt(3, charToSegment('0' + digit3));
+  ledModule->flush();
+}
+
+void Display::showIdle() {
+  if (!ledModule) return;
+  
+  ledModule->setPatternAt(0, charToSegment('I'));
+  ledModule->setPatternAt(1, charToSegment('d'));
+  ledModule->setPatternAt(2, charToSegment('L'));
+  ledModule->setPatternAt(3, charToSegment('e'));
+  ledModule->flush();
+}
+
+void Display::setButtonPressed(bool pressed) {
+  buttonPressed = pressed;
+}
+
 uint8_t Display::charToSegment(char c) {
   switch (c) {
     case '0': return 0b00111111;
@@ -124,6 +159,7 @@ uint8_t Display::charToSegment(char c) {
     case 'D': case 'd': return 0b01011110;
     case 'E': case 'e': return 0b01111001;
     case 'F': case 'f': return 0b01110001;
+    case 'I': case 'i': return 0b00000110;
     case 'L': case 'l': return 0b00111000;
     case 'N': case 'n': return 0b01010100;
     case 'o': case 'O': return 0b01011100;
@@ -169,6 +205,10 @@ void Display::flush() {
     if ((unsigned long)(now - lastFlushTime) >= 20) {
       lastFlushTime = now;
       ledModule->flushIncremental();
+    }
+    
+    if (buttonPressed) {
+      return;
     }
     
     if (showingMIDIMessage && (unsigned long)(now - midiMessageTime) >= 500) {

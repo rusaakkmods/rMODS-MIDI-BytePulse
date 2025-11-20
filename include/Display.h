@@ -16,6 +16,9 @@ public:
   void showStop();
   void advanceAnimation();
   void setBeat(uint8_t beat);
+  void showBPM();
+  void showIdle();
+  void setButtonPressed(bool pressed);
 
 private:
   ace_tmi::SimpleTmi1637Interface* tmiInterface = nullptr;
@@ -30,6 +33,7 @@ private:
   bool showingMIDIMessage = false;
   bool animationNeedsUpdate = false;
   uint8_t currentBeat = 0;
+  bool buttonPressed = false;
   
   void initializeHardware();
   uint8_t charToSegment(char c);

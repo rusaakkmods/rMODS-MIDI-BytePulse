@@ -27,6 +27,9 @@
 #define DISPLAY_CLK_PIN    8
 #define DISPLAY_DIO_PIN    9
 
+// Push Button
+#define BUTTON_PIN         16
+
 // Debug
 #define SERIAL_DEBUG        false
 #define DEBUG_BAUD_RATE    115200
