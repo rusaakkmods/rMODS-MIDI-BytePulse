@@ -196,7 +196,6 @@ All dependencies auto-installed via PlatformIO:
 ```ini
 - MIDI Library v5.0.2 (fortyseveneffects)
 - MIDIUSB v1.0.5 (Arduino)
-- Encoder v1.4.4 (Paul Stoffregen)
 - AceSegment v0.13.0 (Brian Park)
 ```
 
@@ -393,7 +392,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Libraries:**
 - [MIDI Library](https://github.com/FortySevenEffects/arduino_midi_library) by FortySevenEffects
 - [MIDIUSB](https://github.com/arduino-libraries/MIDIUSB) by Arduino
-- [Encoder](https://github.com/PaulStoffregen/Encoder) by Paul Stoffregen
 - [AceSegment](https://github.com/bxparks/AceSegment) by Brian Park
 
 **Hardware:**
