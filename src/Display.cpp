@@ -89,12 +89,44 @@ void Display::updateClockIndicator(bool clockRunning) {
 }
 
 void Display::setBPM(uint16_t bpm) {
-  // Constrain to valid range and only update if different
+  // Constrain to valid range
   bpm = constrain(bpm, 20, 400);
-  if (bpm != currentBPM) {
+  
+  // Stop waiting mode
+  isWaiting = false;
+  
+  // Only update if changed by more than 2 BPM (same as debug threshold)
+  if (abs((int)bpm - (int)currentBPM) > 2) {
     currentBPM = bpm;
-    needsUpdate = true;
+    // Update display with BPM right-aligned, decimal on last digit
+    if (tm1637) {
+      // Use showNumberDecEx which allows decimal point control
+      // 0x80 >> 3 = 0x10 sets decimal on 4th digit (position 3)
+      tm1637->showNumberDecEx(currentBPM, 0x80 >> 3, false, 3, 1);
+    }
   }
+}
+
+void Display::showClockIndicator() {
+  // Show "0." when clock starts (right-aligned with decimal)
+  if (tm1637) {
+    tm1637->showNumberDecEx(0, 0x80 >> 3, false, 3, 1);
+    currentBPM = 0;  // Reset current BPM so first real BPM will show
+  }
+}
+
+void Display::showWaiting() {
+  isWaiting = true;
+  
+  // Show "PLaY" (P=0b01110011, L=0b00111000, a=0b01011111, Y=0b01101110)
+  if (tm1637) {
+    uint8_t segments[4] = {0b01110011, 0b00111000, 0b01011111, 0b01101110};
+    tm1637->setSegments(segments);
+  }
+}
+
+void Display::update() {
+  // No blinking needed - "PLaY" is static
 }
 
 void Display::setSource(const char* source) {

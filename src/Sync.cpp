@@ -148,6 +148,19 @@ void Sync::handleClock(ClockSource source) {
           DEBUG_PRINT("BPM: ");
           DEBUG_PRINTLN(currentBPM);
           lastDisplayedBPM = currentBPM;
+          
+          // Update display via callback
+          if (onBPMUpdate) {
+            onBPMUpdate(currentBPM);
+          }
+        }
+        #else
+        // In non-debug mode, still call display callback
+        if (abs((int)currentBPM - (int)lastDisplayedBPM) > 2) {
+          lastDisplayedBPM = currentBPM;
+          if (onBPMUpdate) {
+            onBPMUpdate(currentBPM);
+          }
         }
         #endif
       }
@@ -177,6 +190,12 @@ void Sync::handleStart(ClockSource source) {
     // Reset BPM calculation
     beatPosition = 0;
     lastBeatTime = 0;
+    lastDisplayedBPM = 0;  // Reset to allow BPM display after restart
+    
+    // Show clock indicator immediately
+    if (onClockStart) {
+      onClockStart();
+    }
     
     return;
   }
@@ -193,6 +212,12 @@ void Sync::handleStart(ClockSource source) {
     // Reset BPM calculation
     beatPosition = 0;
     lastBeatTime = 0;
+    lastDisplayedBPM = 0;  // Reset to allow BPM display after restart
+    
+    // Show clock indicator immediately
+    if (onClockStart) {
+      onClockStart();
+    }
   }
 }
 
@@ -209,6 +234,11 @@ void Sync::handleStop(ClockSource source) {
     beatPosition = 0;
     lastBeatTime = 0;
     // Keep currentBPM - last known value
+    
+    // Clear display via callback
+    if (onClockStop) {
+      onClockStop();
+    }
     
     return;
   }
@@ -231,6 +261,11 @@ void Sync::handleStop(ClockSource source) {
     digitalWrite(LED_BEAT_PIN, LOW);
     clockState = false;
     ledState = false;
+    
+    // Clear display via callback
+    if (onClockStop) {
+      onClockStop();
+    }
   }
 }
 
@@ -253,6 +288,12 @@ void Sync::update() {
       // Reset BPM calculation
       beatPosition = 0;
       lastBeatTime = 0;
+      lastDisplayedBPM = 0;  // Reset to allow BPM display after restart
+      
+      // Show clock indicator immediately
+      if (onClockStart) {
+        onClockStart();
+      }
     }
     
     sendMIDIClock();
@@ -289,6 +330,19 @@ void Sync::update() {
               DEBUG_PRINT("BPM: ");
               DEBUG_PRINTLN(currentBPM);
               lastDisplayedBPM = currentBPM;
+              
+              // Update display via callback
+              if (onBPMUpdate) {
+                onBPMUpdate(currentBPM);
+              }
+            }
+            #else
+            // In non-debug mode, still call display callback
+            if (abs((int)currentBPM - (int)lastDisplayedBPM) > 2) {
+              lastDisplayedBPM = currentBPM;
+              if (onBPMUpdate) {
+                onBPMUpdate(currentBPM);
+              }
             }
             #endif
           }
@@ -315,6 +369,11 @@ void Sync::update() {
         // Reset BPM calculation
         beatPosition = 0;
         lastBeatTime = 0;
+        
+        // Clear display via callback
+        if (onClockStop) {
+          onClockStop();
+        }
       }
     }
     else if (avgSyncInInterval > 0 && (millis() - lastSyncInTime) > (avgSyncInInterval * 3)) {
@@ -327,6 +386,11 @@ void Sync::update() {
         // Reset BPM calculation
         beatPosition = 0;
         lastBeatTime = 0;
+        
+        // Clear display via callback
+        if (onClockStop) {
+          onClockStop();
+        }
       }
     }
   }
@@ -359,6 +423,11 @@ void Sync::checkUSBTimeout() {
     // Reset BPM calculation
     beatPosition = 0;
     lastBeatTime = 0;
+    
+    // Clear display via callback
+    if (onClockStop) {
+      onClockStop();
+    }
   }
 }
 

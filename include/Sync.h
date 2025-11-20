@@ -25,6 +25,11 @@ public:
   bool isBeatActive() const { return ledState; }
   bool isClockRunning() const { return isPlaying; }
   uint16_t getCurrentBPM() const { return currentBPM; }
+  
+  // BPM update callback - set this to update display
+  void (*onBPMUpdate)(uint16_t bpm) = nullptr;
+  void (*onClockStop)() = nullptr;
+  void (*onClockStart)() = nullptr;
 
 private:
   void checkUSBTimeout();

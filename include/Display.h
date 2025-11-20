@@ -17,6 +17,9 @@ public:
   void setBPM(uint16_t bpm);
   void setSource(const char* source);
   void clear();
+  void showWaiting();  // Show blinking "---" while calculating BPM
+  void showClockIndicator();  // Show just the clock indicator
+  void update();       // Call in main loop for blinking
 
 private:
   TM1637Display* tm1637 = nullptr;
@@ -24,6 +27,9 @@ private:
   bool needsUpdate = false;
   bool needsInit = false;
   bool lastClockState = false;
+  bool isWaiting = false;
+  unsigned long lastBlinkTime = 0;
+  bool blinkState = false;
   
   void initializeHardware();
   void updateIfNeeded();

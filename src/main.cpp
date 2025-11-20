@@ -15,6 +15,21 @@ MIDIHandler midiHandler;
 Sync sync;
 Display display;
 
+// BPM update callback
+void onBPMChanged(uint16_t bpm) {
+  display.setBPM(bpm);
+}
+
+// Clock stop callback
+void onClockStopped() {
+  display.clear();
+}
+
+// Clock start callback
+void onClockStarted() {
+  display.showClockIndicator();
+}
+
 void syncInInterrupt() {
   sync.handleSyncInPulse();
 }
@@ -60,6 +75,9 @@ void setup() {
   display.clear();  // Clear display after animation
   
   sync.begin();
+  sync.onBPMUpdate = onBPMChanged;  // Set callback for BPM updates
+  sync.onClockStop = onClockStopped;  // Set callback for clock stop
+  sync.onClockStart = onClockStarted;  // Set callback for clock start
   midiHandler.setSync(&sync);
   midiHandler.begin();
   
@@ -70,9 +88,5 @@ void loop() {
   sync.update();
   processUSBMIDI();
   midiHandler.update();
-  MidiUSB.flush();
-  midiHandler.flushBuffer();
-  
-  // Update clock indicator (only updates on start/stop, no impact on timing)
-  display.updateClockIndicator(sync.isClockRunning());
+  midiHandler.flushBuffer();  // This already calls MidiUSB.flush()
 }
