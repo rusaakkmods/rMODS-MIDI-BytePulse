@@ -119,6 +119,34 @@ void Display::showStop() {
   }
 }
 
+void Display::advanceAnimation() {
+  // Called on each MIDI clock pulse to advance animation
+  // MIDI clock = 24 PPQN, 96 pulses per bar (4/4)
+  // For 16 steps per bar: advance every 6 pulses (96/16=6)
+  if (isPlaying && !isIdle && !showingMIDIMessage) {
+    static uint8_t clockCounter = 0;
+    static uint8_t stepCounter = 0;
+    
+    clockCounter++;
+    
+    if (clockCounter >= 6) {  // Advance every 6 MIDI clock pulses (16th note)
+      clockCounter = 0;
+      animationNeedsUpdate = true;
+      
+      // Track beats: every 4 animation steps = 1 beat (24 clock pulses)
+      stepCounter++;
+      if (stepCounter >= 4) {  // 4 steps = 1 quarter note
+        stepCounter = 0;
+        currentBeat = (currentBeat + 1) % 4;  // Cycle through beats 0-3
+      }
+    }
+  }
+}
+
+void Display::setBeat(uint8_t beat) {
+  currentBeat = beat % 4;
+}
+
 void Display::setSource(const char* source) {
   // Optional: Show source indicator
 }
@@ -244,26 +272,38 @@ void Display::flush() {
       }
     }
     
-    // Handle playing animation (different pattern)
-    if (isPlaying && !isIdle && !showingMIDIMessage && (unsigned long)(now - lastIdleAnimTime) >= 100) {
-      lastIdleAnimTime = now;
+    // Handle playing animation (synced to MIDI clock)
+    if (isPlaying && !isIdle && !showingMIDIMessage && animationNeedsUpdate) {
+      animationNeedsUpdate = false;
       
       // Single rotating pattern shared by all digits - PLAYING pattern
-      // Each frame has 2 LEDs that are NOT adjacent (opposite sides)
+      // Each frame has 1 LED rotating around the segments
       const uint8_t rotatePattern[4] = {
-        0b00000101,  // Top + bottom-right (opposite corners)
-        0b00001010,  // Top-right + bottom (opposite corners)
-        0b00010100,  // Bottom-right + bottom-left (opposite sides)
-        0b00101000   // Top-left + bottom (opposite corners)
+        0b00000001,  // Top
+        0b00000010,  // Top-right
+        0b00001000,  // Bottom
+        0b00100000   // Top-left
       };
       
-      // All digits use same pattern but start at different positions
+      // Calculate which digit gets the decimal point based on beat (0-3)
+      // Decimal shows on digit corresponding to current beat
+      uint8_t decimalDigit = currentBeat;  // Beat 0=digit 0, Beat 1=digit 1, etc.
+      
+      // All digits use same pattern starting at the same point
       for (int i = 0; i < 4; i++) {
-        uint8_t frame = (idleAnimFrame + i) % 4;  // Each digit offset by 1
-        ledModule->setPatternAt(i, rotatePattern[frame]);
+        uint8_t frame = idleAnimFrame % 4;  // All digits show same frame
+        uint8_t pattern = rotatePattern[frame];
+        
+        // Add decimal point to the digit corresponding to current beat
+        if (i == decimalDigit) {
+          pattern |= 0b10000000;  // Set decimal point bit
+        }
+        
+        ledModule->setPatternAt(i, pattern);
       }
       
-      idleAnimFrame = (idleAnimFrame + 1) % 4;
+      idleAnimFrame = (idleAnimFrame + 1);  // Keep incrementing for decimal tracking
+      if (idleAnimFrame >= 16) idleAnimFrame = 0;  // Loop after 16 steps (4 digits × 4 pulses)
     }
   }
 }

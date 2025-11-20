@@ -7,6 +7,8 @@
 
 #include <Arduino.h>
 
+class Display;  // Forward declaration
+
 enum ClockSource {
   CLOCK_SOURCE_NONE,
   CLOCK_SOURCE_SYNC_IN,
@@ -30,6 +32,8 @@ public:
   void (*onBPMUpdate)(uint16_t bpm) = nullptr;
   void (*onClockStop)() = nullptr;
   void (*onClockStart)() = nullptr;
+  
+  void setDisplay(Display* disp) { display = disp; }
 
 private:
   void checkUSBTimeout();
@@ -61,6 +65,8 @@ private:
   unsigned long lastBeatTime = 0;
   uint16_t currentBPM = 0;
   uint16_t lastDisplayedBPM = 0;  // For change detection
+  
+  Display* display = nullptr;  // Display reference for animation sync
 };
 
 #endif  // SYNC_H

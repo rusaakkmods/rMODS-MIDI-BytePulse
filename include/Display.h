@@ -22,6 +22,8 @@ public:
   void showMIDIMessage(const char* type, uint8_t data, uint8_t channel = 0);  // Show brief MIDI message
   void showPlay();  // Show "PlaY" briefly
   void showStop();  // Show "StoP" briefly
+  void advanceAnimation();  // Advance play animation one step (call on MIDI clock)
+  void setBeat(uint8_t beat);  // Set current beat position (0-3)
 
 private:
   ace_tmi::SimpleTmi1637Interface* tmiInterface = nullptr;
@@ -34,6 +36,8 @@ private:
   uint8_t idleAnimFrame = 0;
   unsigned long midiMessageTime = 0;
   bool showingMIDIMessage = false;
+  bool animationNeedsUpdate = false;
+  uint8_t currentBeat = 0;  // Track current beat (0-3) for decimal display
   
   void initializeHardware();
   uint8_t charToSegment(char c);

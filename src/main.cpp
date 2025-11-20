@@ -76,6 +76,7 @@ void setup() {
   display.clear();  // Clear display after animation
   
   sync.begin();
+  sync.setDisplay(&display);  // Set display reference for animation sync
   sync.onBPMUpdate = onBPMChanged;  // Set callback for BPM updates
   sync.onClockStop = onClockStopped;  // Set callback for clock stop
   sync.onClockStart = onClockStarted;  // Set callback for clock start

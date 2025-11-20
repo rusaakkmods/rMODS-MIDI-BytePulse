@@ -3,6 +3,7 @@
  */
 
 #include "Sync.h"
+#include "Display.h"
 #include "config.h"
 #include <MIDIUSB.h>
 
@@ -116,6 +117,11 @@ void Sync::handleClock(ClockSource source) {
   }
   
   if (!isPlaying) return;
+  
+  // Advance display animation on each clock pulse
+  if (display) {
+    display->advanceAnimation();
+  }
   
   // Output clock pulse every MIDI clock (24 PPQN)
   if (isSyncOutConnected()) {
@@ -304,6 +310,11 @@ void Sync::update() {
     }
     
     sendMIDIClock();
+    
+    // Advance display animation on each clock pulse
+    if (display) {
+      display->advanceAnimation();
+    }
     
     if (isSyncOutConnected()) {
       digitalWrite(SYNC_OUT_PIN, HIGH);
