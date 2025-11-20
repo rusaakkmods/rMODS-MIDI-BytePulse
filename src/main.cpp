@@ -50,6 +50,18 @@ void processUSBMIDI() {
           sync.handleStop(CLOCK_SOURCE_USB);
           break;
       }
+    } else {
+      #if SERIAL_DEBUG
+      Serial.print("USB MIDI: header=0x");
+      Serial.print(rx.header, HEX);
+      Serial.print(" byte1=0x");
+      Serial.print(rx.byte1, HEX);
+      Serial.print(" byte2=");
+      Serial.print(rx.byte2);
+      Serial.print(" byte3=");
+      Serial.println(rx.byte3);
+      #endif
+      midiHandler.forwardUSBtoDIN(rx);
     }
   }
 }

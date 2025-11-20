@@ -2,6 +2,9 @@
 #include "Display.h"
 #include "config.h"
 #include <MIDIUSB.h>
+#include <MIDI.h>
+
+extern midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> MIDI_DIN;
 
 #define PULSE_WIDTH_US 5000
 #define PPQN 24
@@ -185,6 +188,8 @@ void Sync::handleStart(ClockSource source) {
     lastBeatTime = 0;
     lastDisplayedBPM = 0;
     
+    MIDI_DIN.sendRealTime(midi::Start);
+    
     if (onClockStart) {
       onClockStart();
     }
@@ -204,6 +209,8 @@ void Sync::handleStart(ClockSource source) {
     lastBeatTime = 0;
     lastDisplayedBPM = 0;
     
+    MIDI_DIN.sendRealTime(midi::Start);
+    
     if (onClockStart) {
       onClockStart();
     }
@@ -220,6 +227,8 @@ void Sync::handleStop(ClockSource source) {
     ppqnCounter = 0;
     beatPosition = 0;
     lastBeatTime = 0;
+    
+    MIDI_DIN.sendRealTime(midi::Stop);
     
     if (onClockStop) {
       onClockStop();
@@ -243,6 +252,8 @@ void Sync::handleStop(ClockSource source) {
     digitalWrite(LED_BEAT_PIN, LOW);
     clockState = false;
     ledState = false;
+    
+    MIDI_DIN.sendRealTime(midi::Stop);
     
     if (onClockStop) {
       onClockStop();
@@ -411,4 +422,5 @@ bool Sync::isSyncInConnected() {
 void Sync::sendMIDIClock() {
   midiEventPacket_t clockEvent = {0x0F, 0xF8, 0, 0};
   MidiUSB.sendMIDI(clockEvent);
+  MIDI_DIN.sendRealTime(midi::Clock);
 }

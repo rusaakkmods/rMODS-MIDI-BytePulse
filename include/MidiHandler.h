@@ -18,6 +18,7 @@ public:
   void setSync(Sync* s);
   void setDisplay(Display* d);
   static void flushBuffer();
+  static void forwardUSBtoDIN(const midiEventPacket_t& event);
 
 private:
   static Sync* sync;

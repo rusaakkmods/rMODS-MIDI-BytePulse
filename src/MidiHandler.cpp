@@ -63,6 +63,38 @@ void MIDIHandler::forwardDINtoUSB(byte channel, byte type, byte data1, byte data
   sendMessage(event);
 }
 
+void MIDIHandler::forwardUSBtoDIN(const midiEventPacket_t& event) {
+  byte status = event.byte1;
+  byte type = status & 0xF0;
+  byte channel = (status & 0x0F) + 1;
+  
+  switch (type) {
+    case 0x80:
+      MIDI_DIN.sendNoteOff(event.byte2, event.byte3, channel);
+      break;
+    case 0x90:
+      MIDI_DIN.sendNoteOn(event.byte2, event.byte3, channel);
+      break;
+    case 0xA0:
+      MIDI_DIN.sendAfterTouch(event.byte2, event.byte3, channel);
+      break;
+    case 0xB0:
+      MIDI_DIN.sendControlChange(event.byte2, event.byte3, channel);
+      break;
+    case 0xC0:
+      MIDI_DIN.sendProgramChange(event.byte2, channel);
+      break;
+    case 0xD0:
+      MIDI_DIN.sendAfterTouch(event.byte2, channel);
+      break;
+    case 0xE0: {
+      int pitchBend = event.byte2 | (event.byte3 << 7);
+      MIDI_DIN.sendPitchBend(pitchBend, channel);
+      break;
+    }
+  }
+}
+
 void MIDIHandler::handleNoteOn(byte channel, byte note, byte velocity) {
   forwardDINtoUSB(channel, 0x90, note, velocity);
   if (display && sync && !sync->isClockRunning()) {
