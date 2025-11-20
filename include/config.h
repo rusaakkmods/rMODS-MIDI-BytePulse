@@ -1,6 +1,6 @@
 /**
  * MIDI BytePulse - Hardware Configuration
- * Pro Micro Pin Definitions - Minimal Setup
+ * SparkFun Pro Micro (ATmega32U4, 5V, 16MHz)
  */
 
 #ifndef CONFIG_H
@@ -17,8 +17,8 @@
 #define SYNC_OUT_DETECT_PIN   4
 
 // Clock Sync Input
-#define SYNC_IN_PIN           7  // Interrupt-capable pin
-#define SYNC_IN_DETECT_PIN    6  // Jack detection
+#define SYNC_IN_PIN           7
+#define SYNC_IN_DETECT_PIN    6
 
 // LED
 #define LED_BEAT_PIN       10

@@ -8,7 +8,6 @@
 
 #define PULSE_WIDTH_US 5000
 #define PPQN 24
-#define SYNC_OUT_PPQN 24  // Output 24 PPQN (MIDI clock standard - universal compatibility)
 
 void Sync::begin() {
   pinMode(SYNC_OUT_PIN, OUTPUT);
@@ -38,7 +37,6 @@ void Sync::begin() {
   syncInPulseTime = 0;
 }
 
-// Called from interrupt - minimal processing only
 void Sync::handleSyncInPulse() {
   if (!isSyncInConnected()) return;
   syncInPulseTime = millis();
@@ -47,7 +45,6 @@ void Sync::handleSyncInPulse() {
 void Sync::handleClock(ClockSource source) {
   unsigned long now = millis();
   
-  // Priority: SYNC_IN > USB > DIN
   if (source == CLOCK_SOURCE_DIN && (activeSource == CLOCK_SOURCE_USB || activeSource == CLOCK_SOURCE_SYNC_IN)) {
     return;
   }
@@ -55,12 +52,10 @@ void Sync::handleClock(ClockSource source) {
     return;
   }
   
-  // Update timing for active source
   if (source == CLOCK_SOURCE_USB && usbIsPlaying) {
     if (prevUSBClockTime > 0) {
       unsigned long interval = now - prevUSBClockTime;
       
-      // Light smoothing for timeout calculation only
       if (avgUSBClockInterval == 0) {
         avgUSBClockInterval = interval;
       } else {
@@ -77,7 +72,6 @@ void Sync::handleClock(ClockSource source) {
     if (prevDINClockTime > 0) {
       unsigned long interval = now - prevDINClockTime;
       
-      // Light smoothing for timeout calculation only
       if (avgDINClockInterval == 0) {
         avgDINClockInterval = interval;
       } else {
@@ -108,7 +102,7 @@ void Sync::handleClock(ClockSource source) {
     if (!isPlaying) {
       isPlaying = true;
       activeSource = CLOCK_SOURCE_DIN;
-      ppqnCounter = 0;  // Start at 0 for proper first beat
+      ppqnCounter = 0;
       lastDINClockTime = millis();
       prevDINClockTime = 0;
       avgDINClockInterval = 0;
@@ -117,26 +111,22 @@ void Sync::handleClock(ClockSource source) {
   
   if (!isPlaying) return;
   
-  // Output clock pulse at 2 PPQN (every 12 MIDI clocks)
-  // PPQN 24 / OUTPUT 2 = divider 12
-  if (ppqnCounter % (PPQN / SYNC_OUT_PPQN) == 0) {
-    if (isSyncOutConnected()) {
-      digitalWrite(SYNC_OUT_PIN, HIGH);
-      clockState = true;
-      lastPulseTime = micros();
-    }
+  // Output clock pulse every MIDI clock (24 PPQN)
+  if (isSyncOutConnected()) {
+    digitalWrite(SYNC_OUT_PIN, HIGH);
+    clockState = true;
+    lastPulseTime = micros();
   }
   
-  // Handle beat LED on downbeat (ppqnCounter == 0)
+  // LED on quarter notes
   if (ppqnCounter == 0) {
     digitalWrite(LED_BEAT_PIN, HIGH);
     ledState = true;
     if (!clockState) {
-      lastPulseTime = micros();  // Sync LED timing with clock if not already pulsing
+      lastPulseTime = micros();
     }
   }
   
-  // Increment counter after processing current beat
   ppqnCounter++;
   if (ppqnCounter >= PPQN) {
     ppqnCounter = 0;
@@ -151,9 +141,8 @@ void Sync::handleStart(ClockSource source) {
     prevUSBClockTime = 0;
     avgUSBClockInterval = 0;
     isPlaying = true;
-    ppqnCounter = 0;  // Ready for first clock at position 0
+    ppqnCounter = 0;
     
-    // Don't output pulse/LED here - let first clock handle it
     return;
   }
   
@@ -164,9 +153,7 @@ void Sync::handleStart(ClockSource source) {
   if (source == CLOCK_SOURCE_DIN && !usbIsPlaying) {
     activeSource = CLOCK_SOURCE_DIN;
     isPlaying = true;
-    ppqnCounter = 0;  // Ready for first clock at position 0
-    
-    // Don't output pulse/LED here - let first clock handle it
+    ppqnCounter = 0; 
   }
 }
 
@@ -199,7 +186,6 @@ void Sync::handleStop(ClockSource source) {
 void Sync::update() {
   unsigned long currentTime = micros();
   
-  // Process sync input pulses (from interrupt)
   if (syncInPulseTime > 0) {
     unsigned long pulseTime = syncInPulseTime;
     syncInPulseTime = 0;
@@ -214,17 +200,14 @@ void Sync::update() {
       avgSyncInInterval = 0;
     }
     
-    // Send MIDI Clock to USB (every pulse)
     sendMIDIClock();
     
-    // Forward sync input directly to sync output (1:1 passthrough)
     if (isSyncOutConnected()) {
       digitalWrite(SYNC_OUT_PIN, HIGH);
       clockState = true;
       lastPulseTime = currentTime;
     }
     
-    // Update timing and LED
     if (syncInIsPlaying) {
       if (prevSyncInTime > 0) {
         unsigned long interval = pulseTime - prevSyncInTime;
@@ -233,7 +216,6 @@ void Sync::update() {
       prevSyncInTime = pulseTime;
       lastSyncInTime = pulseTime;
       
-      // LED flash every 24 pulses (quarter notes)
       if (ppqnCounter == 0) {
         digitalWrite(LED_BEAT_PIN, HIGH);
         ledState = true;
@@ -245,7 +227,6 @@ void Sync::update() {
     }
   }
   
-  // Check sync input timeout/disconnect
   if (syncInIsPlaying) {
     if (!isSyncInConnected()) {
       syncInIsPlaying = false;
@@ -269,7 +250,6 @@ void Sync::update() {
   
   checkUSBTimeout();
   
-  // Turn off pulses after 5ms
   if (clockState && (currentTime - lastPulseTime >= PULSE_WIDTH_US)) {
     digitalWrite(SYNC_OUT_PIN, LOW);
     clockState = false;
@@ -285,26 +265,12 @@ void Sync::checkUSBTimeout() {
   if (!usbIsPlaying || avgUSBClockInterval == 0) return;
   
   unsigned long now = millis();
-  unsigned long timeSinceLastClock = now - lastUSBClockTime;
-  unsigned long timeoutThreshold = avgUSBClockInterval * 3;
-  
-  if (timeSinceLastClock > timeoutThreshold) {
+  if ((now - lastUSBClockTime) > (avgUSBClockInterval * 3)) {
     usbIsPlaying = false;
     activeSource = CLOCK_SOURCE_NONE;
     avgUSBClockInterval = 0;
     prevUSBClockTime = 0;
   }
-}
-
-void Sync::pulseClock() {
-  digitalWrite(SYNC_OUT_PIN, HIGH);
-  clockState = true;
-  lastPulseTime = micros();
-}
-
-void Sync::pulseLED() {
-  digitalWrite(LED_BEAT_PIN, HIGH);
-  ledState = true;
 }
 
 bool Sync::isSyncOutConnected() {
@@ -318,5 +284,4 @@ bool Sync::isSyncInConnected() {
 void Sync::sendMIDIClock() {
   midiEventPacket_t clockEvent = {0x0F, 0xF8, 0, 0};
   MidiUSB.sendMIDI(clockEvent);
-  // No flush here - let main loop handle batching
 }

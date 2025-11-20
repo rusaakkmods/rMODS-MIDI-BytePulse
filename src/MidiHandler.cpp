@@ -12,12 +12,10 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI_DIN);
 Sync* MIDIHandler::sync = nullptr;
 
 void MIDIHandler::sendMessage(const midiEventPacket_t& event) {
-  // Send immediately without buffering
   MidiUSB.sendMIDI(event);
 }
 
 void MIDIHandler::flushBuffer() {
-  // Single flush call for batched channel messages
   MidiUSB.flush();
 }
 
@@ -57,7 +55,6 @@ void MIDIHandler::forwardDINtoUSB(byte channel, byte type, byte data1, byte data
   event.byte3 = data2;
   
   sendMessage(event);
-  // Note: Main loop flushes in batches for efficiency
 }
 
 void MIDIHandler::handleNoteOn(byte channel, byte note, byte velocity) {
@@ -107,11 +104,10 @@ void MIDIHandler::handleSystemExclusive(byte* data, unsigned size) {
     
     sendMessage(event);
   }
-  MidiUSB.flush();  // Flush after complete sysex
+  MidiUSB.flush();
 }
 
 void MIDIHandler::handleClock() {
-  // Send clock immediately (time-critical, high frequency)
   midiEventPacket_t event = {0x0F, 0xF8, 0, 0};
   MidiUSB.sendMIDI(event);
   
@@ -129,7 +125,6 @@ void MIDIHandler::handleClock() {
 }
 
 void MIDIHandler::handleStart() {
-  // Send start immediately without buffering
   midiEventPacket_t event = {0x0F, 0xFA, 0, 0};
   MidiUSB.sendMIDI(event);
   MidiUSB.flush();
@@ -140,7 +135,6 @@ void MIDIHandler::handleStart() {
 }
 
 void MIDIHandler::handleContinue() {
-  // Send continue immediately without buffering
   midiEventPacket_t event = {0x0F, 0xFB, 0, 0};
   MidiUSB.sendMIDI(event);
   MidiUSB.flush();
@@ -151,10 +145,8 @@ void MIDIHandler::handleContinue() {
 }
 
 void MIDIHandler::handleStop() {
-  // Flush all pending messages before stopping
   flushBuffer();
   
-  // Send stop immediately
   midiEventPacket_t event = {0x0F, 0xFC, 0, 0};
   MidiUSB.sendMIDI(event);
   MidiUSB.flush();
@@ -165,14 +157,12 @@ void MIDIHandler::handleStop() {
 }
 
 void MIDIHandler::handleActiveSensing() {
-  // Send immediately without buffering (realtime message)
   midiEventPacket_t event = {0x0F, 0xFE, 0, 0};
   MidiUSB.sendMIDI(event);
   MidiUSB.flush();  // Flush to prevent accumulation
 }
 
 void MIDIHandler::handleSystemReset() {
-  // Send immediately without buffering (realtime message)
   midiEventPacket_t event = {0x0F, 0xFF, 0, 0};
   MidiUSB.sendMIDI(event);
   MidiUSB.flush();

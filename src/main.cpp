@@ -13,17 +13,15 @@
 MIDIHandler midiHandler;
 Sync sync;
 
-// Interrupt handler for sync input
 void syncInInterrupt() {
   sync.handleSyncInPulse();
 }
 
 void processUSBMIDI() {
-  // Drain entire USB receive buffer to prevent message backup
   while (true) {
     midiEventPacket_t rx = MidiUSB.read();
     
-    if (rx.header == 0) break;  // No more messages
+    if (rx.header == 0) break;
     
     // Handle realtime messages
     if (rx.header == 0x0F) {
@@ -50,14 +48,13 @@ void setup() {
   midiHandler.setSync(&sync);
   midiHandler.begin();
   
-  // Sync input interrupt on pin 7 (RISING edge)
   attachInterrupt(digitalPinToInterrupt(SYNC_IN_PIN), syncInInterrupt, RISING);
 }
 
 void loop() {
-  sync.update();              // Time-critical: Sync output first
-  processUSBMIDI();            // Process USB MIDI messages
-  midiHandler.update();        // Process DIN MIDI messages  
-  MidiUSB.flush();             // Flush USB MIDI buffer
-  midiHandler.flushBuffer();   // Flush DIN MIDI buffer
+  sync.update();
+  processUSBMIDI();
+  midiHandler.update();
+  MidiUSB.flush();
+  midiHandler.flushBuffer();
 }

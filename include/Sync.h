@@ -22,12 +22,8 @@ public:
   void handleStop(ClockSource source);
   void handleSyncInPulse();
   void update();
-  ClockSource getActiveSource() { return activeSource; }
-  unsigned long getClockInterval() { return avgUSBClockInterval; }
 
 private:
-  void pulseClock();
-  void pulseLED();
   void checkUSBTimeout();
   bool isSyncOutConnected();
   bool isSyncInConnected();
