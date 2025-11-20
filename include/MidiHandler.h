@@ -8,17 +8,17 @@
 #include <Arduino.h>
 #include <MIDIUSB.h>
 
-class SyncOut;
+class Sync;
 
 class MIDIHandler {
 public:
   void begin();
   void update();
-  void setSyncOut(SyncOut* sync);
+  void setSync(Sync* s);
   static void flushBuffer();
 
 private:
-  static SyncOut* syncOut;
+  static Sync* sync;
   
   static void sendMessage(const midiEventPacket_t& event);
   static void forwardDINtoUSB(byte channel, byte type, byte data1, byte data2);

@@ -13,8 +13,12 @@
 #define MIDI_OUT_PIN        1
 
 // Clock Sync Output
-#define CLOCK_OUT_PIN       5
-#define SYNC_DETECT_PIN     4
+#define SYNC_OUT_PIN          5
+#define SYNC_OUT_DETECT_PIN   4
+
+// Clock Sync Input
+#define SYNC_IN_PIN           7  // Interrupt-capable pin
+#define SYNC_IN_DETECT_PIN    6  // Jack detection
 
 // LED
 #define LED_BEAT_PIN       10

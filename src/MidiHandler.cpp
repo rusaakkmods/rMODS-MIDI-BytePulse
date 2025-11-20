@@ -3,13 +3,13 @@
  */
 
 #include "MIDIHandler.h"
-#include "SyncOut.h"
+#include "Sync.h"
 #include <MIDI.h>
 #include <MIDIUSB.h>
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI_DIN);
 
-SyncOut* MIDIHandler::syncOut = nullptr;
+Sync* MIDIHandler::sync = nullptr;
 
 void MIDIHandler::sendMessage(const midiEventPacket_t& event) {
   // Send immediately without buffering
@@ -45,8 +45,8 @@ void MIDIHandler::update() {
   MIDI_DIN.read();
 }
 
-void MIDIHandler::setSyncOut(SyncOut* sync) {
-  syncOut = sync;
+void MIDIHandler::setSync(Sync* s) {
+  sync = s;
 }
 
 void MIDIHandler::forwardDINtoUSB(byte channel, byte type, byte data1, byte data2) {
@@ -123,8 +123,8 @@ void MIDIHandler::handleClock() {
     clockCounter = 0;
   }
   
-  if (syncOut) {
-    syncOut->handleClock(CLOCK_SOURCE_DIN);
+  if (sync) {
+    sync->handleClock(CLOCK_SOURCE_DIN);
   }
 }
 
@@ -134,8 +134,8 @@ void MIDIHandler::handleStart() {
   MidiUSB.sendMIDI(event);
   MidiUSB.flush();
   
-  if (syncOut) {
-    syncOut->handleStart(CLOCK_SOURCE_DIN);
+  if (sync) {
+    sync->handleStart(CLOCK_SOURCE_DIN);
   }
 }
 
@@ -145,8 +145,8 @@ void MIDIHandler::handleContinue() {
   MidiUSB.sendMIDI(event);
   MidiUSB.flush();
   
-  if (syncOut) {
-    syncOut->handleStart(CLOCK_SOURCE_DIN);
+  if (sync) {
+    sync->handleStart(CLOCK_SOURCE_DIN);
   }
 }
 
@@ -159,8 +159,8 @@ void MIDIHandler::handleStop() {
   MidiUSB.sendMIDI(event);
   MidiUSB.flush();
   
-  if (syncOut) {
-    syncOut->handleStop(CLOCK_SOURCE_DIN);
+  if (sync) {
+    sync->handleStop(CLOCK_SOURCE_DIN);
   }
 }
 

@@ -8,10 +8,15 @@
 #include <MIDIUSB.h>
 #include "config.h"
 #include "MIDIHandler.h"
-#include "SyncOut.h"
+#include "Sync.h"
 
 MIDIHandler midiHandler;
-SyncOut syncOut;
+Sync sync;
+
+// Interrupt handler for sync input
+void syncInInterrupt() {
+  sync.handleSyncInPulse();
+}
 
 void processUSBMIDI() {
   // Drain entire USB receive buffer to prevent message backup
@@ -24,16 +29,16 @@ void processUSBMIDI() {
     if (rx.header == 0x0F) {
       switch (rx.byte1) {
         case 0xF8:  // Clock
-          syncOut.handleClock(CLOCK_SOURCE_USB);
+          sync.handleClock(CLOCK_SOURCE_USB);
           break;
         case 0xFA:  // Start
-          syncOut.handleStart(CLOCK_SOURCE_USB);
+          sync.handleStart(CLOCK_SOURCE_USB);
           break;
         case 0xFB:  // Continue
-          syncOut.handleStart(CLOCK_SOURCE_USB);
+          sync.handleStart(CLOCK_SOURCE_USB);
           break;
         case 0xFC:  // Stop
-          syncOut.handleStop(CLOCK_SOURCE_USB);
+          sync.handleStop(CLOCK_SOURCE_USB);
           break;
       }
     }
@@ -41,30 +46,18 @@ void processUSBMIDI() {
 }
 
 void setup() {
-  #if SERIAL_DEBUG
-  Serial.begin(DEBUG_BAUD_RATE);
-  delay(500);
-  DEBUG_PRINTLN("=== MIDI BytePulse v1.0 ===");
-  DEBUG_PRINTLN("Pure MIDI Sync Box");
-  #endif
-  
-  syncOut.begin();
-  midiHandler.setSyncOut(&syncOut);
+  sync.begin();
+  midiHandler.setSync(&sync);
   midiHandler.begin();
   
-  #if SERIAL_DEBUG
-  DEBUG_PRINTLN("Ready.");
-  #endif
+  // Sync input interrupt on pin 7 (RISING edge)
+  attachInterrupt(digitalPinToInterrupt(SYNC_IN_PIN), syncInInterrupt, RISING);
 }
 
-void loop() {  
-  // Time-critical: Sync output first
-  syncOut.update();
-  
-  // MIDI processing
-  processUSBMIDI();
-  midiHandler.update();
-  
-  // Flush batched messages
-  midiHandler.flushBuffer();
+void loop() {
+  sync.update();              // Time-critical: Sync output first
+  processUSBMIDI();            // Process USB MIDI messages
+  midiHandler.update();        // Process DIN MIDI messages  
+  MidiUSB.flush();             // Flush USB MIDI buffer
+  midiHandler.flushBuffer();   // Flush DIN MIDI buffer
 }
