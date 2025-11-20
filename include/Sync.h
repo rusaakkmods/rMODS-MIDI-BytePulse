@@ -22,6 +22,8 @@ public:
   void handleStop(ClockSource source);
   void handleSyncInPulse();
   void update();
+  bool isBeatActive() const { return ledState; }
+  bool isClockRunning() const { return isPlaying; }
 
 private:
   void checkUSBTimeout();

@@ -9,9 +9,11 @@
 #include "config.h"
 #include "MIDIHandler.h"
 #include "Sync.h"
+#include "Display.h"
 
 MIDIHandler midiHandler;
 Sync sync;
+Display display;
 
 void syncInInterrupt() {
   sync.handleSyncInPulse();
@@ -44,6 +46,12 @@ void processUSBMIDI() {
 }
 
 void setup() {
+  // Display disabled due to hardware noise interference with MIDI
+  // To use display: add 10Ω resistor + 100nF cap on display VCC
+  // Or use separate 5V power supply for display module
+  display.begin();  // Animates segments for 2 seconds
+  display.clear();  // Clear display after animation
+  
   sync.begin();
   midiHandler.setSync(&sync);
   midiHandler.begin();
@@ -57,4 +65,8 @@ void loop() {
   midiHandler.update();
   MidiUSB.flush();
   midiHandler.flushBuffer();
+  
+  // Display beat indicator disabled - causes MIDI timing disruption
+  // The TM1637 bit-banging takes ~2ms which breaks real-time MIDI
+  // display.updateBeatIndicator(sync.isBeatActive());
 }

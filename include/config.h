@@ -23,6 +23,10 @@
 // LED
 #define LED_BEAT_PIN       10
 
+// TM1637 Display
+#define DISPLAY_CLK_PIN    8
+#define DISPLAY_DIO_PIN    9
+
 // Debug
 #define SERIAL_DEBUG        false
 #define DEBUG_BAUD_RATE    115200
