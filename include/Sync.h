@@ -24,6 +24,7 @@ public:
   void update();
   bool isBeatActive() const { return ledState; }
   bool isClockRunning() const { return isPlaying; }
+  uint16_t getCurrentBPM() const { return currentBPM; }
 
 private:
   void checkUSBTimeout();
@@ -49,6 +50,12 @@ private:
   bool usbIsPlaying = false;
   bool syncInIsPlaying = false;
   ClockSource activeSource = CLOCK_SOURCE_NONE;
+  
+  // BPM calculation
+  byte beatPosition = 0;
+  unsigned long lastBeatTime = 0;
+  uint16_t currentBPM = 0;
+  uint16_t lastDisplayedBPM = 0;  // For change detection
 };
 
 #endif  // SYNC_H

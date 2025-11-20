@@ -35,6 +35,12 @@ void Sync::begin() {
   prevSyncInTime = 0;
   avgSyncInInterval = 0;
   syncInPulseTime = 0;
+  
+  // BPM calculation
+  beatPosition = 0;
+  lastBeatTime = 0;
+  currentBPM = 0;
+  lastDisplayedBPM = 0;
 }
 
 void Sync::handleSyncInPulse() {
@@ -125,6 +131,31 @@ void Sync::handleClock(ClockSource source) {
     if (!clockState) {
       lastPulseTime = micros();
     }
+    
+    // Calculate BPM on every beat
+    unsigned long now = millis();
+    if (beatPosition == 3) {  // After 4th beat, before wrapping
+      if (lastBeatTime > 0) {
+        unsigned long interval = now - lastBeatTime;
+        // Interval is for 4 beats (one measure at 24 PPQN)
+        // BPM = 60,000 ms/min / (interval_ms / 4)
+        // Simplified: BPM = 240,000 / interval_ms
+        currentBPM = 240000UL / interval;
+        
+        #if SERIAL_DEBUG
+        // Only display if BPM changed by more than 2
+        if (abs((int)currentBPM - (int)lastDisplayedBPM) > 2) {
+          DEBUG_PRINT("BPM: ");
+          DEBUG_PRINTLN(currentBPM);
+          lastDisplayedBPM = currentBPM;
+        }
+        #endif
+      }
+      lastBeatTime = now;
+    }
+    
+    // Move to next beat position
+    beatPosition = (beatPosition + 1) % 4;
   }
   
   ppqnCounter++;
@@ -143,6 +174,10 @@ void Sync::handleStart(ClockSource source) {
     isPlaying = true;
     ppqnCounter = 0;
     
+    // Reset BPM calculation
+    beatPosition = 0;
+    lastBeatTime = 0;
+    
     return;
   }
   
@@ -153,7 +188,11 @@ void Sync::handleStart(ClockSource source) {
   if (source == CLOCK_SOURCE_DIN && !usbIsPlaying) {
     activeSource = CLOCK_SOURCE_DIN;
     isPlaying = true;
-    ppqnCounter = 0; 
+    ppqnCounter = 0;
+    
+    // Reset BPM calculation
+    beatPosition = 0;
+    lastBeatTime = 0;
   }
 }
 
@@ -166,6 +205,11 @@ void Sync::handleStop(ClockSource source) {
     prevUSBClockTime = 0;
     ppqnCounter = 0;  // Added: reset counter
     
+    // Reset BPM calculation
+    beatPosition = 0;
+    lastBeatTime = 0;
+    // Keep currentBPM - last known value
+    
     return;
   }
   
@@ -177,6 +221,11 @@ void Sync::handleStop(ClockSource source) {
     activeSource = CLOCK_SOURCE_NONE;
     isPlaying = false;
     ppqnCounter = 0;
+    
+    // Reset BPM calculation
+    beatPosition = 0;
+    lastBeatTime = 0;
+    // Keep currentBPM - last known value
     
     digitalWrite(SYNC_OUT_PIN, LOW);
     digitalWrite(LED_BEAT_PIN, LOW);
@@ -200,6 +249,10 @@ void Sync::update() {
       lastSyncInTime = pulseTime;
       prevSyncInTime = 0;
       avgSyncInInterval = 0;
+      
+      // Reset BPM calculation
+      beatPosition = 0;
+      lastBeatTime = 0;
     }
     
     sendMIDIClock();
@@ -222,6 +275,26 @@ void Sync::update() {
         digitalWrite(LED_BEAT_PIN, HIGH);
         ledState = true;
         if (!clockState) lastPulseTime = currentTime;
+        
+        // Calculate BPM on every beat for Sync In source
+        unsigned long now = millis();
+        if (beatPosition == 3) {
+          if (lastBeatTime > 0) {
+            unsigned long interval = now - lastBeatTime;
+            currentBPM = 240000UL / interval;
+            
+            #if SERIAL_DEBUG
+            // Only display if BPM changed by more than 2
+            if (abs((int)currentBPM - (int)lastDisplayedBPM) > 2) {
+              DEBUG_PRINT("BPM: ");
+              DEBUG_PRINTLN(currentBPM);
+              lastDisplayedBPM = currentBPM;
+            }
+            #endif
+          }
+          lastBeatTime = now;
+        }
+        beatPosition = (beatPosition + 1) % 4;
       }
       
       ppqnCounter++;
@@ -238,6 +311,10 @@ void Sync::update() {
         ppqnCounter = 0;
         avgSyncInInterval = 0;
         prevSyncInTime = 0;
+        
+        // Reset BPM calculation
+        beatPosition = 0;
+        lastBeatTime = 0;
       }
     }
     else if (avgSyncInInterval > 0 && (millis() - lastSyncInTime) > (avgSyncInInterval * 3)) {
@@ -246,6 +323,10 @@ void Sync::update() {
         activeSource = CLOCK_SOURCE_NONE;
         isPlaying = false;
         ppqnCounter = 0;
+        
+        // Reset BPM calculation
+        beatPosition = 0;
+        lastBeatTime = 0;
       }
     }
   }
@@ -274,6 +355,10 @@ void Sync::checkUSBTimeout() {
     avgUSBClockInterval = 0;
     prevUSBClockTime = 0;
     ppqnCounter = 0;  // Added: reset counter
+    
+    // Reset BPM calculation
+    beatPosition = 0;
+    lastBeatTime = 0;
   }
 }
 

@@ -46,6 +46,13 @@ void processUSBMIDI() {
 }
 
 void setup() {
+  #if SERIAL_DEBUG
+  Serial.begin(DEBUG_BAUD_RATE);
+  while (!Serial && millis() < 3000);  // Wait up to 3 seconds for Serial
+  DEBUG_PRINTLN("MIDI BytePulse - Debug Mode");
+  DEBUG_PRINTLN("BPM monitoring active (change threshold: >2 BPM)");
+  #endif
+  
   // Display disabled due to hardware noise interference with MIDI
   // To use display: add 10Ω resistor + 100nF cap on display VCC
   // Or use separate 5V power supply for display module
