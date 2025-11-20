@@ -73,19 +73,18 @@ void Display::showStandby() {
     // S = 0b01101101, t = 0b01111000, b = 0b01111100, Y = 0b01101110
     uint8_t stby[] = {0b01101101, 0b01111000, 0b01111100, 0b01101110};
     tm1637->setSegments(stby);
-    lastBeatState = false;
+    lastClockState = false;
   }
 }
 
-void Display::updateBeatIndicator(bool beatActive) {
-  // Only update if state changed to minimize TM1637 communication time
-  if (!tm1637 || beatActive == lastBeatState) return;
+void Display::updateClockIndicator(bool clockRunning) {
+  // Only update when clock state changes (start/stop)
+  if (!tm1637 || clockRunning == lastClockState) return;
   
-  lastBeatState = beatActive;
+  lastClockState = clockRunning;
   
-  // Minimal update: just the decimal point on digit 4
-  // TM1637 takes ~2ms to update, but only when beat state changes
-  uint8_t pattern[4] = {0x00, 0x00, 0x00, static_cast<uint8_t>(beatActive ? 0x80 : 0x00)};
+  // Show decimal point on 4th digit when clock is running
+  uint8_t pattern[4] = {0x00, 0x00, 0x00, static_cast<uint8_t>(clockRunning ? 0x80 : 0x00)};
   tm1637->setSegments(pattern);
 }
 

@@ -13,7 +13,7 @@ class Display {
 public:
   void begin();
   void showStandby();
-  void updateBeatIndicator(bool beatActive);
+  void updateClockIndicator(bool clockRunning);
   void setBPM(uint16_t bpm);
   void setSource(const char* source);
   void clear();
@@ -23,7 +23,7 @@ private:
   uint16_t currentBPM = 0;
   bool needsUpdate = false;
   bool needsInit = false;
-  bool lastBeatState = false;
+  bool lastClockState = false;
   
   void initializeHardware();
   void updateIfNeeded();

@@ -66,7 +66,6 @@ void loop() {
   MidiUSB.flush();
   midiHandler.flushBuffer();
   
-  // Display beat indicator disabled - causes MIDI timing disruption
-  // The TM1637 bit-banging takes ~2ms which breaks real-time MIDI
-  // display.updateBeatIndicator(sync.isBeatActive());
+  // Update clock indicator (only updates on start/stop, no impact on timing)
+  display.updateClockIndicator(sync.isClockRunning());
 }
