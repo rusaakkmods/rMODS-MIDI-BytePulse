@@ -79,6 +79,7 @@ void Display::showStop() {
     ledModule->setPatternAt(2, 0b01011100);
     ledModule->setPatternAt(3, 0b01110011);
   }
+  currentBeat = 0;
 }
 
 void Display::advanceAnimation() {
