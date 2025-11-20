@@ -89,4 +89,5 @@ void loop() {
   processUSBMIDI();
   midiHandler.update();
   midiHandler.flushBuffer();  // This already calls MidiUSB.flush()
+  display.flush();  // Non-blocking incremental display update
 }

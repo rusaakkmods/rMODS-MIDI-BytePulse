@@ -1,20 +1,25 @@
 /**
  * MIDI BytePulse - Display Handler Implementation
- * Updates only when value changes - zero MIDI impact
+ * Non-blocking updates using AceSegment library
  */
 
 #include "Display.h"
 #include "config.h"
 
+using ace_tmi::SimpleTmi1637Interface;
+using ace_segment::Tm1637Module;
+
 void Display::begin() {
-  tm1637 = new TM1637Display(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN);
-  tm1637->setBrightness(0x00);  // Minimum brightness (still visible)
+  // Create TM1637 interface with 100us bit delay - guaranteed to work with all modules
+  // Even with capacitors, this is the safest setting from AceSegment examples
+  tmiInterface = new SimpleTmi1637Interface(DISPLAY_DIO_PIN, DISPLAY_CLK_PIN, 100);
+  ledModule = new Tm1637Module<SimpleTmi1637Interface, 4>(*tmiInterface);
   
-  // Total animation: 2000ms
-  // Segment cascade: 10 frames = 1000ms (100ms each)
-  // Decimal points: 4 frames = 600ms (150ms each)
-  // Blinks: 2 blinks = 400ms (100ms on + 100ms off per blink)
+  tmiInterface->begin();
+  ledModule->begin();
+  ledModule->setBrightness(2);  // Medium brightness (0-7)
   
+  // Total animation: 2000ms - matching original behavior
   uint8_t segments[7] = {
     0b00000001,  // Top
     0b00000010,  // Top right
@@ -25,134 +30,131 @@ void Display::begin() {
     0b01000000   // Middle
   };
   
-  // Animate segments with cascade effect (10 frames total, 1000ms)
-  // Digit 1 starts first, then digit 2, then 3, then 4 (each offset by 1 segment)
+  // Segment cascade (10 frames, 1000ms)
   for (int frame = 0; frame < 10; frame++) {
-    uint8_t pattern[4];
-    
     for (int digit = 0; digit < 4; digit++) {
-      // Each digit is offset by its position
       int segmentIdx = frame - digit;
-      
       if (segmentIdx >= 0 && segmentIdx < 7) {
-        pattern[digit] = segments[segmentIdx];
+        ledModule->setPatternAt(digit, segments[segmentIdx]);
       } else {
-        pattern[digit] = 0b00000000;  // Off if not in range
+        ledModule->setPatternAt(digit, 0b00000000);
       }
     }
-    
-    tm1637->setSegments(pattern);
-    delay(100);  // 10 * 100ms = 1000ms
+    ledModule->flush();
+    delay(100);
   }
   
-  // Animate decimal points (4 frames, 600ms total)
+  // Decimal points (4 frames, 600ms)
   for (int dp = 0; dp < 4; dp++) {
-    uint8_t pattern[4] = {0b00000000, 0b00000000, 0b00000000, 0b00000000};
-    pattern[dp] = 0b10000000;
-    tm1637->setSegments(pattern);
-    delay(150);  // 4 * 150ms = 600ms
+    for (int digit = 0; digit < 4; digit++) {
+      ledModule->setPatternAt(digit, digit == dp ? 0b10000000 : 0b00000000);
+    }
+    ledModule->flush();
+    delay(150);
   }
   
-  // Blink all segments 2 times (400ms total)
+  // Blink all (2 blinks, 400ms)
   for (int blink = 0; blink < 2; blink++) {
-    // All on
-    uint8_t allOn[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-    tm1637->setSegments(allOn);
+    for (int digit = 0; digit < 4; digit++) {
+      ledModule->setPatternAt(digit, 0xFF);
+    }
+    ledModule->flush();
     delay(100);
     
-    // All off
-    uint8_t allOff[4] = {0x00, 0x00, 0x00, 0x00};
-    tm1637->setSegments(allOff);
+    for (int digit = 0; digit < 4; digit++) {
+      ledModule->setPatternAt(digit, 0x00);
+    }
+    ledModule->flush();
     delay(100);
   }
 }
 
 void Display::showStandby() {
-  if (tm1637) {
+  if (ledModule) {
     // Show "StbY"
-    // S = 0b01101101, t = 0b01111000, b = 0b01111100, Y = 0b01101110
     uint8_t stby[] = {0b01101101, 0b01111000, 0b01111100, 0b01101110};
-    tm1637->setSegments(stby);
-    lastClockState = false;
+    for (int i = 0; i < 4; i++) {
+      ledModule->setPatternAt(i, stby[i]);
+    }
+    ledModule->flush();
   }
 }
 
 void Display::updateClockIndicator(bool clockRunning) {
-  // Only update when clock state changes (start/stop)
-  if (!tm1637 || clockRunning == lastClockState) return;
-  
-  lastClockState = clockRunning;
-  
-  // Show decimal point on 4th digit when clock is running
-  uint8_t pattern[4] = {0x00, 0x00, 0x00, static_cast<uint8_t>(clockRunning ? 0x80 : 0x00)};
-  tm1637->setSegments(pattern);
+  // Not used with AceSegment - decimal is part of BPM pattern
 }
 
 void Display::setBPM(uint16_t bpm) {
-  // Constrain to valid range
   bpm = constrain(bpm, 20, 400);
   
-  // Stop waiting mode
-  isWaiting = false;
-  
-  // Only update if changed by more than 2 BPM (same as debug threshold)
+  // Only update if changed by more than 2 BPM
   if (abs((int)bpm - (int)currentBPM) > 2) {
     currentBPM = bpm;
-    // Update display with BPM right-aligned, decimal on last digit
-    if (tm1637) {
-      // Use showNumberDecEx which allows decimal point control
-      // 0x80 >> 3 = 0x10 sets decimal on 4th digit (position 3)
-      tm1637->showNumberDecEx(currentBPM, 0x80 >> 3, false, 3, 1);
+    
+    if (ledModule) {
+      // Convert BPM to 3 digits (right-aligned)
+      uint8_t hundreds = (bpm / 100) % 10;
+      uint8_t tens = (bpm / 10) % 10;
+      uint8_t ones = bpm % 10;
+      
+      // Digit patterns for 0-9
+      const uint8_t digitToSegment[10] = {
+        0b00111111, // 0
+        0b00000110, // 1
+        0b01011011, // 2
+        0b01001111, // 3
+        0b01100110, // 4
+        0b01101101, // 5
+        0b01111101, // 6
+        0b00000111, // 7
+        0b01111111, // 8
+        0b01101111  // 9
+      };
+      
+      // Right-align: blank, hundreds (or blank if 0), tens, ones with decimal
+      ledModule->setPatternAt(0, 0b00000000);  // First digit always blank
+      ledModule->setPatternAt(1, hundreds > 0 ? digitToSegment[hundreds] : 0b00000000);
+      ledModule->setPatternAt(2, digitToSegment[tens]);
+      ledModule->setPatternAt(3, digitToSegment[ones] | 0b10000000);  // Ones with decimal point
+      
+      // Patterns are set, flushIncremental() will handle the update
     }
   }
 }
 
 void Display::showClockIndicator() {
-  // Show "0." when clock starts (right-aligned with decimal)
-  if (tm1637) {
-    tm1637->showNumberDecEx(0, 0x80 >> 3, false, 3, 1);
-    currentBPM = 0;  // Reset current BPM so first real BPM will show
-  }
-}
-
-void Display::showWaiting() {
-  isWaiting = true;
-  
-  // Show "PLaY" (P=0b01110011, L=0b00111000, a=0b01011111, Y=0b01101110)
-  if (tm1637) {
-    uint8_t segments[4] = {0b01110011, 0b00111000, 0b01011111, 0b01101110};
-    tm1637->setSegments(segments);
-  }
-}
-
-void Display::update() {
-  // No blinking needed - "PLaY" is static
-}
-
-void Display::setSource(const char* source) {
-  // Optional: Show source indicator
-  // Could use leftmost digit: U=USB, d=DIN, S=Sync
-  // For now, just show BPM
-}
-
-void Display::clear() {
-  if (tm1637) {
-    tm1637->clear();
+  // Show "  0." when clock starts
+  if (ledModule) {
+    ledModule->setPatternAt(0, 0b00000000);
+    ledModule->setPatternAt(1, 0b00000000);
+    ledModule->setPatternAt(2, 0b00000000);
+    ledModule->setPatternAt(3, 0b00111111 | 0b10000000);  // 0 with decimal
     currentBPM = 0;
   }
 }
 
-void Display::updateIfNeeded() {
-  if (needsUpdate && tm1637) {
-    // Update display ONLY when BPM changes
-    // Takes ~2ms but happens rarely (once per second max)
-    tm1637->showNumberDec(currentBPM, false);
-    needsUpdate = false;
+void Display::setSource(const char* source) {
+  // Optional: Show source indicator
+}
+
+void Display::clear() {
+  if (ledModule) {
+    for (int i = 0; i < 4; i++) {
+      ledModule->setPatternAt(i, 0b00000000);
+    }
+    ledModule->flush();
+    currentBPM = 0;
   }
 }
 
-// Global helper function for main loop
-extern Display display;
-void displayUpdateHelper() {
-  display.updateIfNeeded();
+void Display::flush() {
+  // Call flushIncremental() every 20ms like the AceSegment examples
+  // This updates one digit at a time in a round-robin fashion
+  if (ledModule) {
+    unsigned long now = millis();
+    if ((unsigned long)(now - lastFlushTime) >= 20) {
+      lastFlushTime = now;
+      ledModule->flushIncremental();
+    }
+  }
 }
