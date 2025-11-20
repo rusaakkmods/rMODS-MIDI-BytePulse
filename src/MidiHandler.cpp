@@ -123,11 +123,8 @@ void MIDIHandler::handleClock() {
   midiEventPacket_t event = {0x0F, 0xF8, 0, 0};
   MidiUSB.sendMIDI(event);
   
-  // Flush every 4 clocks to prevent USB buffer overflow
-  // At 120 BPM: 48 clocks/sec, 4 clocks = ~83ms
   static uint8_t clockCounter = 0;
-  if (++clockCounter >= 4) {
-    MidiUSB.flush();
+  if (++clockCounter >= 6) {
     clockCounter = 0;
   }
   
@@ -139,9 +136,7 @@ void MIDIHandler::handleClock() {
 void MIDIHandler::handleStart() {
   midiEventPacket_t event = {0x0F, 0xFA, 0, 0};
   MidiUSB.sendMIDI(event);
-  MidiUSB.flush();
   
-  // Show "PlaY" briefly
   if (display) {
     display->showPlay();
   }
@@ -154,9 +149,7 @@ void MIDIHandler::handleStart() {
 void MIDIHandler::handleContinue() {
   midiEventPacket_t event = {0x0F, 0xFB, 0, 0};
   MidiUSB.sendMIDI(event);
-  MidiUSB.flush();
   
-  // Show "PlaY" briefly
   if (display) {
     display->showPlay();
   }
@@ -167,13 +160,9 @@ void MIDIHandler::handleContinue() {
 }
 
 void MIDIHandler::handleStop() {
-  flushBuffer();
-  
   midiEventPacket_t event = {0x0F, 0xFC, 0, 0};
   MidiUSB.sendMIDI(event);
-  MidiUSB.flush();
   
-  // Show "StoP" briefly
   if (display) {
     display->showStop();
   }
@@ -186,11 +175,9 @@ void MIDIHandler::handleStop() {
 void MIDIHandler::handleActiveSensing() {
   midiEventPacket_t event = {0x0F, 0xFE, 0, 0};
   MidiUSB.sendMIDI(event);
-  MidiUSB.flush();  // Flush to prevent accumulation
 }
 
 void MIDIHandler::handleSystemReset() {
   midiEventPacket_t event = {0x0F, 0xFF, 0, 0};
   MidiUSB.sendMIDI(event);
-  MidiUSB.flush();
 }

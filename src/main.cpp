@@ -13,16 +13,16 @@ MIDIHandler midiHandler;
 Sync sync;
 Display display;
 
+uint16_t getCurrentBPM() {
+  return sync.getCurrentBPM();
+}
+
 void onBPMChanged(uint16_t bpm) {
   display.setBPM(bpm);
 }
 
 void onClockStopped() {
   display.clear();
-}
-
-void onClockStarted() {
-
 }
 
 void syncInInterrupt() {
@@ -70,7 +70,6 @@ void setup() {
   sync.setDisplay(&display); 
   sync.onBPMUpdate = onBPMChanged; 
   sync.onClockStop = onClockStopped; 
-  sync.onClockStart = onClockStarted;  
   midiHandler.setSync(&sync);
   midiHandler.setDisplay(&display);
   midiHandler.begin();
@@ -79,9 +78,9 @@ void setup() {
 }
 
 void loop() {
-  sync.update();
-  processUSBMIDI();
   midiHandler.update();
+  processUSBMIDI();
+  sync.update();
+  display.flush();
   midiHandler.flushBuffer();
-  display.flush(); 
 }

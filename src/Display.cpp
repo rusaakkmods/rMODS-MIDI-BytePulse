@@ -53,19 +53,6 @@ void Display::begin() {
   }
 }
 
-void Display::showStandby() {
-  if (ledModule) {
-    uint8_t stby[] = {0b01101101, 0b01111000, 0b01111100, 0b01101110};
-    for (int i = 0; i < 4; i++) {
-      ledModule->setPatternAt(i, stby[i]);
-    }
-    ledModule->flush();
-  }
-}
-
-void Display::updateClockIndicator(bool clockRunning) {
-}
-
 void Display::setBPM(uint16_t bpm) {
   bpm = constrain(bpm, 20, 400);
   
@@ -116,9 +103,6 @@ void Display::advanceAnimation() {
 
 void Display::setBeat(uint8_t beat) {
   currentBeat = beat % 4;
-}
-
-void Display::setSource(const char* source) {
 }
 
 uint8_t Display::charToSegment(char c) {

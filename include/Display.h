@@ -8,10 +8,7 @@
 class Display {
 public:
   void begin();
-  void showStandby();
-  void updateClockIndicator(bool clockRunning);
   void setBPM(uint16_t bpm);
-  void setSource(const char* source);
   void clear();
   void flush();
   void showMIDIMessage(const char* type, uint8_t data, uint8_t channel = 0);
