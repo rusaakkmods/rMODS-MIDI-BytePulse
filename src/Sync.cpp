@@ -144,7 +144,7 @@ void Sync::handleClock(ClockSource source) {
         currentBPM = 240000UL / interval;
         
         #if SERIAL_DEBUG
-        if (abs((int)currentBPM - (int)lastDisplayedBPM) > 2) {
+        if (abs((int)currentBPM - (int)lastDisplayedBPM) >= 2) {
           DEBUG_PRINT("BPM: ");
           DEBUG_PRINTLN(currentBPM);
           lastDisplayedBPM = currentBPM;
@@ -154,7 +154,7 @@ void Sync::handleClock(ClockSource source) {
           }
         }
         #else
-        if (abs((int)currentBPM - (int)lastDisplayedBPM) > 2) {
+        if (abs((int)currentBPM - (int)lastDisplayedBPM) >= 2) {
           lastDisplayedBPM = currentBPM;
           if (onBPMUpdate) {
             onBPMUpdate(currentBPM);
